@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.9.2";
+  const VERSION = "0.9.3";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1148,120 +1148,9 @@
     },34);
   }
 
-  // KEVIN: his desk from above. A blueprint of his build (skills wired into
-  // him, stats, title block), his Talents as a hand of cards, two decks and a
-  // wooden sliding puzzle that keeps working itself.
-  function kevinSchematic(labels) {
-    const ys = [70,190,310];
-    const parts = labels.map((label,i) => {
-      const y = ys[i];
-      return '<g class="asc-bp-part"><rect x="20" y="' + (y - 26) + '" width="150" height="52" rx="2"/>' +
-        '<text x="30" y="' + (y - 8) + '" class="asc-bp-ref">M' + (i + 1) + '</text>' +
-        '<text x="30" y="' + (y + 13) + '" class="asc-bp-name">' + esc(label.toUpperCase()) + '</text>' +
-        '<line x1="170" y1="' + y + '" x2="186" y2="' + y + '"/></g>';
-    }).join("");
-    const pins = [168,190,212];
-    const wires = ys.slice(0,labels.length).map((y,i) =>
-      '<path class="asc-bp-trace" pathLength="1" style="--d:' + (0.15 + i * 0.12) + 's" d="M186 ' + y + ' H210 l5 -7 l8 14 l8 -14 l8 14 l8 -14 l5 7 H270 V' + pins[i] + ' H330"/>' +
-      '<circle class="asc-bp-node" cx="270" cy="' + pins[i] + '" r="3" style="--d:' + (0.9 + i * 0.1) + 's"/>').join("");
-    return '<svg class="asc-bp-schematic" viewBox="0 0 640 380" aria-hidden="true">' +
-      parts + wires +
-      '<path class="asc-bp-trace" pathLength="1" style="--d:.55s" d="M330 130 H450 V250 H330 Z"/>' +
-      '<text x="346" y="160" class="asc-bp-ref">U0</text><text x="346" y="186" class="asc-bp-big">KEVIN</text><text x="346" y="206" class="asc-bp-small">ANALYST CORE</text>' +
-      '<path class="asc-bp-trace" pathLength="1" style="--d:.9s" d="M450 190 H490 M490 160 V220 L540 190 Z M540 190 H612 M600 182 l12 8 l-12 8"/>' +
-      '<text x="548" y="176" class="asc-bp-small">SQUAD BUS</text>' +
-      '<path class="asc-bp-trace" pathLength="1" style="--d:1s" d="M390 130 V92 M378 92 H402 M390 250 V300 M374 300 H406 M380 308 H400 M386 316 H394"/>' +
-      '<text x="408" y="96" class="asc-bp-small">+INT 17</text>' +
-    '</svg>';
-  }
-
-  // Photo props for Kevin's desk live in Forge storage under Ascent/kevin/.
-  const KEVIN_PROPS = "https://assets.forge-vtt.com/600d963af3cd821ef5bfb19a/Ascent/kevin/";
-
-  function kevinStage({p,actor}) {
-    const talents = C.TALENTS.filter(t => t.owner === p.key);
-    const pick = Math.min(select.talent,talents.length - 1);
-    const lock = lockState(actor);
-    const sys = actor.system.attributes;
-    const skillKeys = [...(p.free ?? []),...p.skills];
-    const rows = STAT_KEYS.map(k =>
-      '<tr class="' + (k === "int" ? "is-key" : "") + '"><td>' + k.toUpperCase() + '</td><td>' + p.abilities[k] + '</td></tr>').join("");
-    const cards = talents.map((t,i) =>
-      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="asc-dk-card' + (i === pick ? " is-on" : "") + '" data-talent="' + i + '" style="--i:' + (i - (talents.length - 1) / 2) + '">' +
-        '<span class="asc-dk-card-name">' + esc(t.name) + '</span>' +
-        '<span class="asc-dk-card-art"><i class="' + esc(t.icon ?? "fa-solid fa-star") + '"></i></span>' +
-        '<span class="asc-dk-card-type">TALENT // ' + esc(p.name.toUpperCase()) + '</span>' +
-        '<span class="asc-dk-card-text">' + esc(t.text) + '</span>' +
-      '</button>').join("");
-    const tiles = [1,2,3,4,5,6,7,8].map(n => '<i class="asc-dk-tile" data-n="' + n + '">' + n + '</i>').join("");
-    const deck = [0,1,2,3,4].map(() => '<img src="' + KEVIN_PROPS + 'kv-mtg-back.webp" alt="">').join("");
-    return '<div class="asc-dk' + (select.kevinDrawn ? " is-drawn" : "") + '" style="--desk:url(' + KEVIN_PROPS + 'kv-desk.webp)">' +
-      // blueprint: subtle, lying at an angle
-      '<section class="asc-bp" aria-label="Blueprint">' +
-        '<div class="asc-bp-hazard" aria-hidden="true"></div>' +
-        '<header class="asc-bp-top"><span>DWG 0417 // ' + esc((p.role ?? "").toUpperCase()) + '</span><span>FLOOR ' + floor() + ' &middot; SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
-        kevinSchematic(skillKeys.map(k => C.SKILL[k].name)) +
-        '<div class="asc-bp-tables">' +
-          '<table class="asc-bp-bom"><tbody>' + rows + '</tbody></table>' +
-          '<table class="asc-bp-title"><tbody>' +
-            '<tr><th>DRAWN BY</th><td>' + esc(p.name.toUpperCase()) + '</td></tr>' +
-            '<tr><th>ALIAS</th><td>' + esc((p.handle || "-").toUpperCase()) + '</td></tr>' +
-            '<tr><th>RATING</th><td>HP ' + sys.hp.max + ' &middot; AC ' + sys.ac.value + ' &middot; SPD ' + sys.movement.walk + '</td></tr>' +
-            '<tr><th>REV</th><td>A &middot; SHEET 1 OF 1</td></tr>' +
-          '</tbody></table>' +
-        '</div>' +
-        '<figure class="asc-bp-photo"><i class="asc-bp-tape"></i>' + artOf(actor,p.name[0]) + '<figcaption>ref.</figcaption></figure>' +
-      '</section>' +
-      // props
-      '<img class="asc-dk-prop asc-dk-burr" src="' + KEVIN_PROPS + 'kv-burr.webp" alt="">' +
-      '<img class="asc-dk-prop asc-dk-ball" src="' + KEVIN_PROPS + 'kv-ball.webp" alt="">' +
-      '<span class="asc-dk-puzzle" aria-hidden="true">' + tiles + '</span>' +
-      '<span class="asc-dk-mtg" aria-hidden="true">' + deck + '</span>' +
-      '<div class="asc-dk-castle" aria-hidden="true">' +
-        '<img class="asc-dk-prop" src="' + KEVIN_PROPS + 'kv-castle.webp" alt="">' +
-        '<i class="asc-dk-puff p1"></i><i class="asc-dk-puff p2"></i><i class="asc-dk-puff p3"></i>' +
-      '</div>' +
-      // name and bio on a sticky note
-      '<div class="asc-dk-note-card"><b>' + esc(p.name) + '</b><span>' + esc(p.blurb ?? "") + '</span></div>' +
-      // Talents as a hand of cards
-      '<div class="asc-dk-hand" role="tablist" aria-label="Talents">' + cards + '</div>' +
-      (lock.note ? '<p class="asc-dk-note">' + esc(lock.note) + '</p>' : '') +
-      '<div class="asc-dk-gm">' + gmTools(actor) + '</div>' +
-    '</div>';
-  }
-
-  // Puzzle: tiles sit on a 3x3 grid with one gap; every so often a tile next
-  // to the gap slides into it. Traces draw once per pick.
-  function kevinAfter(root) {
-    if (!select.kevinDrawn) setTimeout(() => { select.kevinDrawn = true; },1600);
-    const puzzle = root.querySelector(".asc-dk-puzzle");
-    if (!puzzle) return;
-    select.puzzle ??= [1,2,3,4,5,6,7,8,0];
-    const place = () => select.puzzle.forEach((n,cell) => {
-      if (!n) return;
-      const tile = puzzle.querySelector('[data-n="' + n + '"]');
-      tile.style.transform = "translate(" + (cell % 3) * 100 + "%," + Math.floor(cell / 3) * 100 + "%)";
-    });
-    place();
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    clearInterval(select.puzzleTimer);
-    let last = -1;
-    select.puzzleTimer = setInterval(() => {
-      if (!puzzle.isConnected) return clearInterval(select.puzzleTimer);
-      const gap = select.puzzle.indexOf(0);
-      const near = [gap - 3,gap + 3,gap % 3 ? gap - 1 : -1,gap % 3 < 2 ? gap + 1 : -1].filter(c => c >= 0 && c < 9 && c !== last);
-      const from = near[Math.floor(Math.random() * near.length)];
-      select.puzzle[gap] = select.puzzle[from];
-      select.puzzle[from] = 0;
-      last = gap;
-      place();
-    },1100);
-  }
-
   const STAGES = {
     andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"},
-    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."},
-    kevin:{render:kevinStage,after:kevinAfter,lock:"SIGN OFF",flash:() => "APPROVED // REV A"}
+    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."}
   };
 
   function infoPanel({p,actor}) {
@@ -1349,7 +1238,6 @@
     select.talent = 0;
     // Cara's sprite resolves once per pick, not on every Talent click.
     select.caraResolved = false;
-    select.kevinDrawn = false;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
     await playTheme(list[index].actor);
@@ -1436,7 +1324,6 @@
     const mine = list.findIndex(x => x.actor.id === game.user.character?.id);
     select.index = mine >= 0 ? mine : 0;
     select.caraResolved = false;
-    select.kevinDrawn = false;
     renderSelect();
     select.el.querySelector(".asc-v-card.is-active .asc-v-hit")?.focus();
     preloadThemes();
