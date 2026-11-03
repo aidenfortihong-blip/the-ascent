@@ -1282,7 +1282,7 @@
 @keyframes asc-st-twinkle { to { opacity: 0.35; } }
 
 /* left: the trigram circle turning behind the portrait */
-.asc-st-left { position: relative; display: grid; place-items: center; min-height: 0; }
+.asc-st-left { position: relative; display: grid; place-items: center; min-height: 0; overflow: hidden; }
 .asc-st-ring {
   position: absolute;
   width: min(100%, 86vh);
@@ -1311,7 +1311,8 @@
 
 /* cut-out: no frame, the figure stands in the circle with a soft gold rim light */
 .asc-st-portrait.is-cut {
-  height: min(96%, 760px);
+  height: 100%;
+  max-height: 760px;
   aspect-ratio: 900 / 1249;
   overflow: visible;
   border: 0;
