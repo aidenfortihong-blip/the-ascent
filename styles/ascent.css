@@ -1140,7 +1140,7 @@
 }
 
 .asc-ca-portrait {
-  height: min(52vh, 480px);
+  height: min(40vh, 400px);
   aspect-ratio: 0.75;
   border: 6px solid #fff;
   outline: 6px solid #000;
@@ -1163,7 +1163,7 @@
   text-shadow: 4px 4px 0 var(--ca-purple-deep);
   border: 0;
 }
-.asc-ca-sub { margin: 14px 0 0; font-family: var(--ca-pixel); font-size: 11px; line-height: 1.6; color: var(--ca-purple); }
+.asc-ca-sub { margin: 14px 0 0; font-family: var(--ca-pixel); font-size: 12px; line-height: 1.6; color: var(--ca-purple); }
 
 .asc-ca-hp {
   display: flex;
