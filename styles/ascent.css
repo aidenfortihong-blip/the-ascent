@@ -713,7 +713,7 @@
 .asc-v-roster {
   grid-area: roster;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 150px));
+  grid-template-columns: repeat(5, minmax(0, min(150px, 15vh)));
   justify-content: center;
   gap: 8px;
 }
