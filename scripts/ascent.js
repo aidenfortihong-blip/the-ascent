@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.5.2";
+  const VERSION = "0.5.3";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -931,7 +931,9 @@
     return '<div class="asc-ca">' +
       '<div class="asc-ca-bg" aria-hidden="true"></div>' +
       '<div class="asc-ca-arena">' +
-        '<canvas class="asc-ca-sprite" width="300" height="400" role="img" aria-label="' + esc(p.name) + '" data-src="' + esc(actor.img) + '"></canvas>' +
+        (select.caraResolved
+          ? '<img class="asc-ca-real" src="' + esc(actor.img) + '" alt="' + esc(p.name) + '">'
+          : '<canvas class="asc-ca-sprite" width="300" height="400" role="img" aria-label="' + esc(p.name) + '" data-src="' + esc(actor.img) + '"></canvas>') +
       '</div>' +
       '<div class="asc-ca-box" role="tabpanel" aria-live="polite"><p class="asc-ca-type" data-type="' + esc(line) + '">' + esc(line) + '</p></div>' +
       '<div class="asc-ca-hud">' +
@@ -971,6 +973,7 @@
       const W = canvas.width, H = canvas.height;
       const finish = () => {
         if (!canvas.isConnected) return;
+        select.caraResolved = true;
         const real = document.createElement("img");
         real.className = "asc-ca-real";
         real.src = img.src;
@@ -1128,6 +1131,8 @@
     if (!list[index]) return;
     select.index = index;
     select.talent = 0;
+    // Cara's sprite resolves once per pick, not on every Talent click.
+    select.caraResolved = false;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
     await playTheme(list[index].actor);
