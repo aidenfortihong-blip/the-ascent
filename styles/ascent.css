@@ -1674,3 +1674,50 @@
   .asc-ink-splat * { animation: none; }
   #asc-select[data-stage="aiden"] .asc-sel-flash span { animation: none; }
 }
+
+/* ---------- short screens (laptops at 720-800 px tall) ----------
+   Each stage tightens its own spacing so nothing scrolls inside the window. */
+@media (max-height: 820px) {
+  .asc-stage { gap: 10px; }
+
+  /* Evan: smaller medallion, tighter rows */
+  .asc-th-who { grid-template-columns: 112px 1fr; }
+  .asc-th-medal { width: 112px; height: 138px; }
+  .asc-th-col h3 { margin-bottom: 5px; font-size: 16px; }
+  .asc-th-col h3:not(:first-child) { margin-top: 6px; }
+  .asc-th-col dt { font-size: 16px; }
+  .asc-th-col dd { font-size: 17px; }
+  .asc-th-lv, .asc-th-hp { margin-top: 4px; }
+  .asc-th-hp b { font-size: 22px; }
+  .asc-th-stats { gap: 2px 16px; }
+  .asc-th-stats b { font-size: 21px; }
+  .asc-th-list, .asc-th-techs { gap: 4px; }
+  #asc-select .asc-th-list button { padding: 3px 8px; font-size: 16px; }
+  #asc-select .asc-th-list button i, .asc-th-techs li i { flex-basis: 22px; height: 22px; }
+  .asc-th-techs li { min-height: 0; padding: 3px 8px; font-size: 16px; }
+  .asc-th-desc { margin-top: 6px; padding: 5px 8px; font-size: 15px; line-height: 1.35; }
+  .asc-th-levels { gap: 5px; }
+  .asc-th-levels li { padding-bottom: 3px; }
+
+  /* Aiden: smaller seals and strokes */
+  .asc-ink-role { margin-top: 6px; font-size: 20px; }
+  .asc-ink-blurb { font-size: 16px; line-height: 1.45; }
+  .asc-ink-seals { margin-top: 8px; }
+  #asc-select .asc-ink-seals button { gap: 3px; font-size: 14px; }
+  #asc-select .asc-ink-seals button i { width: 42px; height: 42px; font-size: 18px; }
+  .asc-ink-cols { margin-top: 8px; }
+  .asc-ink-strokes { gap: 1px; }
+  .asc-ink-strokes b { font-size: 19px; }
+  .asc-ink-skills { gap: 3px; font-size: 16px; }
+  .asc-ink-vitals { margin-top: 8px; }
+
+  /* Andrei: tighter readouts */
+  .asc-an-data h2 { font-size: clamp(40px, 4.4vw, 64px); }
+  .asc-an-log { margin-top: 6px; font-size: 12px; line-height: 1.4; }
+  .asc-an-warn { margin-top: 6px; padding: 4px 8px; }
+  #asc-select[data-stage="andrei"] .asc-an-data small { margin: 8px 0 4px; }
+  .asc-an-bars { gap: 2px; }
+  .asc-an-subs { gap: 2px; }
+  #asc-select .asc-an-subs button { padding: 4px 10px; font-size: 12px; }
+  .asc-an-desc { padding: 5px 8px; }
+}
