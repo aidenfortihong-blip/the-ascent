@@ -823,7 +823,7 @@
 .asc-stage {
   position: relative;
   width: min(1500px, 100%);
-  height: min(900px, 100%);
+  height: min(900px, calc(100vh - 2 * clamp(16px, 3vw, 44px)));
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
   gap: 16px;
