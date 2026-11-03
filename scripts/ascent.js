@@ -1218,6 +1218,7 @@
     const list = prefabs();
     const mine = list.findIndex(x => x.actor.id === game.user.character?.id);
     select.index = mine >= 0 ? mine : 0;
+    select.caraResolved = false;
     renderSelect();
     select.el.querySelector(".asc-v-card.is-active .asc-v-hit")?.focus();
     preloadThemes();
