@@ -276,6 +276,9 @@
 }
 .asc-chip button { padding: 0 6px; font-size: 10px; border-radius: 999px; }
 
+.asc-callit footer { display: flex; gap: 6px; margin-top: 6px; }
+.asc-callit footer button { flex: 1; font-size: 12px; }
+.asc-callit.is-true { --asc-cat: var(--asc-gold); }
 .asc-hotswap { border-color: var(--asc-gold) !important; color: var(--asc-gold) !important; border-radius: 999px !important; }
 .asc-talent.is-spent { opacity: 0.5; cursor: default; }
 .asc-card.is-borrowed { border-style: dashed; border-top: 2px solid var(--asc-gold); background: rgba(255, 207, 107, 0.06); }

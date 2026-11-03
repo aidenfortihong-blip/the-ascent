@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.7.0";
+  const VERSION = "0.8.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -193,6 +193,63 @@
     });
   }
 
+  // CALLED IT (Kevin): once per fight, write a secret prediction for the GM.
+  // If the GM rules it came true, Kevin takes an extra turn right after the
+  // current one, then the order picks up where it left off.
+  async function callIt(actor) {
+    if (!hasTalent(actor,"calledit") || !canEdit(actor)) return;
+    if (!inCombat(actor)) return ui.notifications.warn("Called It works during a fight.");
+    if (flags(actor).calledItUsed) return ui.notifications.warn("Called It is spent for this fight.");
+    const prediction = await foundry.applications.api.DialogV2.prompt({
+      window:{title:"Called It"},
+      content:'<p>Write a specific prediction. Only the GM sees it. The harder the call, the better.</p><textarea name="call" rows="3" style="width:100%" placeholder="The archer flees before the end of next round."></textarea>',
+      ok:{label:"Lock it in",callback:(event,button) => button.form.elements.call.value.trim()},
+      rejectClose:false
+    });
+    if (!prediction) return;
+    await actor.update({["flags."+MODULE+".calledItUsed"]:true});
+    const owners = game.users.filter(u => u.isGM || actor.testUserPermission(u,"OWNER")).map(u => u.id);
+    ChatMessage.create({
+      speaker:ChatMessage.getSpeaker({actor}),
+      whisper:owners,
+      flags:{[MODULE]:{callit:{actorId:actor.id,prediction}}},
+      content:'<div class="asc-chat asc-callit"><small>CALLED IT // SEALED PREDICTION</small><p>' + esc(prediction) + '</p>' +
+        '<footer><button type="button" data-asc-callit="yes">Came true</button><button type="button" data-asc-callit="no">Didn\'t happen</button></footer></div>'
+    });
+  }
+
+  async function resolveCallIt(message,cameTrue) {
+    if (!game.user.isGM) return ui.notifications.warn("Only the GM rules on a prediction.");
+    const data = message.flags?.[MODULE]?.callit;
+    if (!data || data.resolved) return;
+    const actor = game.actors.get(data.actorId);
+    await message.update({
+      ["flags."+MODULE+".callit.resolved"]:cameTrue ? "yes" : "no",
+      content:'<div class="asc-chat asc-callit"><small>CALLED IT // SEALED PREDICTION</small><p>' + esc(data.prediction) + '</p><footer>' + (cameTrue ? "Came true." : "Did not happen.") + '</footer></div>'
+    });
+    if (!cameTrue || !actor) return;
+    const combatant = game.combat?.combatants.find(c => c.actor?.id === actor.id);
+    if (combatant) await game.combat.update({["flags."+MODULE+".extraTurn"]:combatant.id});
+    ChatMessage.create({
+      speaker:ChatMessage.getSpeaker({actor}),
+      content:'<div class="asc-chat asc-callit is-true"><small>CALLED IT</small><h3>' + esc(actor.name) + ' saw it coming</h3><p>&ldquo;' + esc(data.prediction) + '&rdquo;</p>' +
+        (combatant ? '<footer>Extra turn right after this one.</footer>' : '') + '</div>'
+    });
+  }
+
+  function onRenderChat(message,html) {
+    const root = html instanceof HTMLElement ? html : html?.[0];
+    const buttons = root?.querySelectorAll?.("[data-asc-callit]");
+    if (!buttons?.length) return;
+    for (const button of buttons) {
+      if (!game.user.isGM || message.flags?.[MODULE]?.callit?.resolved) { button.remove(); continue; }
+      button.addEventListener("click",event => {
+        event.preventDefault();
+        resolveCallIt(message,button.dataset.ascCallit === "yes").catch(error => ui.notifications.error(error.message));
+      });
+    }
+  }
+
   async function endBorrow(actor) {
     if (!flags(actor).borrowed || !canEdit(actor)) return;
     await actor.update({["flags."+MODULE+".borrowed"]:null});
@@ -286,6 +343,7 @@
     const spent = flags(actor).spent ?? {};
     const updates = {};
     for (const id of Object.keys(spent)) if (spent[id]) updates["flags."+MODULE+".spent."+id] = false;
+    if (flags(actor).calledItUsed) updates["flags."+MODULE+".calledItUsed"] = false;
     if (Object.keys(updates).length) await actor.update(updates);
     for (const effect of actor.effects.filter(e => e.flags?.[MODULE]?.recovery)) await effect.delete();
   }
@@ -573,6 +631,11 @@
       '</header>' +
       (talents.length ? '<div class="asc-talents"><small>TALENTS</small>' + talents.map(t =>
         '<span class="asc-talent" data-tooltip="' + esc(foundry.utils.stripHTML?.(t.system.description.value) ?? "") + '">' + esc(t.name) + '</span>').join("") +
+        (hasTalent(actor,"calledit") && owner
+          ? (flags(actor).calledItUsed
+            ? '<span class="asc-talent is-spent">CALLED IT USED</span>'
+            : inCombat(actor) ? '<button type="button" class="asc-hotswap" data-asc="callit"><i class="fa-solid fa-lightbulb"></i> CALL IT</button>' : '')
+          : '') +
         (swap && owner && !flags(actor).borrowed
           ? (flags(actor).hotSwapUsed
             ? '<span class="asc-talent is-spent">HOT SWAP SPENT</span>'
@@ -606,6 +669,7 @@
       case "finisher": return chooseFinisher(actor,key,Number(button.dataset.index));
       case "hotswap": return hotSwap(actor);
       case "endborrow": return endBorrow(actor);
+      case "callit": return callIt(actor);
     }
   }
 
@@ -1459,8 +1523,24 @@
       on("updateCombat",(combat,changed) => {
         if (!isActiveGM() || !combat.started) return;
         if (!("turn" in changed) && !("round" in changed)) return;
+        // Called It: the turn just ended, so Kevin goes now; afterwards the
+        // order resumes at the turn that was coming. A change that sets or
+        // clears "resume" is that jump itself.
+        const f = combat.flags?.[MODULE] ?? {};
+        const jumping = foundry.utils.hasProperty(changed,"flags."+MODULE+".resume");
+        if (!jumping && f.extraTurn) {
+          const idx = combat.turns.findIndex(c => c.id === f.extraTurn);
+          if (idx >= 0) {
+            combat.update({turn:idx,["flags."+MODULE+".extraTurn"]:null,["flags."+MODULE+".resume"]:{turn:combat.turn,round:combat.round}});
+            return;
+          }
+        } else if (!jumping && f.resume) {
+          combat.update({turn:f.resume.turn,round:f.resume.round,["flags."+MODULE+".resume"]:null});
+          return;
+        }
         onTurnStart(combat).catch(error => console.warn("THE ASCENT // turn start failed",error));
       });
+      on("renderChatMessageHTML",onRenderChat);
       on("deleteCombat",combat => {
         if (!isActiveGM()) return;
         for (const c of combat.combatants) if (c.actor) clearFight(c.actor).catch(() => {});
