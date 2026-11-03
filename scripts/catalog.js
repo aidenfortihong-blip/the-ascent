@@ -300,30 +300,30 @@
 
   // Talents: who you were before you jacked in. Free, fixed, never level.
   const TALENTS = [
-    {key:"pattern",owner:"kevin",name:"Pattern Recognition",text:"Once per fight, ask the GM one question about an enemy's behavior and get a true answer."},
-    {key:"calledit",owner:"kevin",name:"Called It",text:"Once per floor, get one meaningful hint about anything: a puzzle, a lie, a trap, the boss."},
-    {key:"rideordie",owner:"kevin",name:"Ride or Die",text:"Take the Help action as a bonus action on an ally within 30 ft."},
-    {key:"debater",owner:"andrei",name:"Dubious Debater",text:"Advantage on arguments, negotiations and haggling."},
-    {key:"yourmom",owner:"andrei",name:"Your Mom",text:"Bonus action: insult an enemy so its next attack has disadvantage. You have to actually say the joke."},
-    {key:"mcevilson",owner:"andrei",name:"Evil McEvilson",text:"Advantage on Intimidation against creatures with lower Intelligence than you."},
-    {key:"brawler",owner:"evan",name:"Brawler",text:"Your unarmed hits deal real damage (d6 + Str) even without the Martial Arts skill."},
-    {key:"mooscles",owner:"evan",name:"Mooscles",text:"Advantage on grapples, shoves and Athletics checks."},
-    {key:"doggo",owner:"evan",name:"Doggo",text:"Advantage on Persuasion checks."},
-    {key:"mentalmath",owner:"cara",name:"Mental Math",text:"Once per short rest, after seeing any ally's roll, add or subtract 2."},
-    {key:"wiki",owner:"cara",name:"Walking Wiki",text:"Advantage on all lore and knowledge checks."},
-    {key:"hotswap",owner:"cara",name:"Hot Swap",text:"Once per long rest, at any moment, even mid-fight, swap one slotted skill for another you know. It keeps its rank."},
-    {key:"rt107",owner:"aiden",name:".107",text:"Always first in initiative."},
-    {key:"clipthat",owner:"aiden",name:"Clip That",text:"Once per fight, declare an attack a critical hit before rolling."},
-    {key:"selftaught",owner:"aiden",name:"Self-Taught",text:"Skills need about half the ticks to rank up. Once per floor, after watching someone use a skill well, gain a tick in it."}
+    {key:"pattern",icon:"fa-solid fa-chess-knight",owner:"kevin",name:"Pattern Recognition",text:"Once per fight, ask the GM one question about an enemy's behavior and get a true answer."},
+    {key:"calledit",icon:"fa-solid fa-lightbulb",owner:"kevin",name:"Called It",text:"Once per floor, get one meaningful hint about anything: a puzzle, a lie, a trap, the boss."},
+    {key:"rideordie",icon:"fa-solid fa-handshake-angle",owner:"kevin",name:"Ride or Die",text:"Take the Help action as a bonus action on an ally within 30 ft."},
+    {key:"debater",icon:"fa-solid fa-comments",owner:"andrei",name:"Dubious Debater",text:"Advantage on arguments, negotiations and haggling."},
+    {key:"yourmom",icon:"fa-solid fa-face-grin-squint-tears",owner:"andrei",name:"Your Mom",text:"Bonus action: insult an enemy so its next attack has disadvantage. You have to actually say the joke."},
+    {key:"mcevilson",icon:"fa-solid fa-mask",owner:"andrei",name:"Evil McEvilson",text:"Advantage on Intimidation against creatures with lower Intelligence than you."},
+    {key:"brawler",icon:"fa-solid fa-hand-fist",owner:"evan",name:"Brawler",text:"Your unarmed hits deal real damage (d6 + Str) even without the Martial Arts skill."},
+    {key:"mooscles",icon:"fa-solid fa-dumbbell",owner:"evan",name:"Mooscles",text:"Advantage on grapples, shoves and Athletics checks."},
+    {key:"doggo",icon:"fa-solid fa-dog",owner:"evan",name:"Doggo",text:"Advantage on Persuasion checks."},
+    {key:"mentalmath",icon:"fa-solid fa-calculator",owner:"cara",name:"Mental Math",text:"Once per short rest, after seeing any ally's roll, add or subtract 2."},
+    {key:"wiki",icon:"fa-solid fa-book-open",owner:"cara",name:"Walking Wiki",text:"Advantage on all lore and knowledge checks."},
+    {key:"hotswap",icon:"fa-solid fa-repeat",owner:"cara",name:"Hot Swap",text:"Once per long rest, at any moment, even mid-fight, swap one slotted skill for another you know. It keeps its rank."},
+    {key:"rt107",icon:"fa-solid fa-bolt",owner:"aiden",name:".107",text:"Always first in initiative."},
+    {key:"clipthat",icon:"fa-solid fa-video",owner:"aiden",name:"Clip That",text:"Once per fight, declare an attack a critical hit before rolling."},
+    {key:"selftaught",icon:"fa-solid fa-graduation-cap",owner:"aiden",name:"Self-Taught",text:"Skills need about half the ticks to rank up. Once per floor, after watching someone use a skill well, gain a tick in it."}
   ];
 
   // Prefabs: the five people the players pick from.
   const PREFABS = [
-    {key:"kevin",name:"Kevin",handle:"Agent Tangerine",abilities:{str:10,dex:11,con:10,int:17,wis:13,cha:9},skills:["spear","appraisal","searching"]},
-    {key:"andrei",name:"Andrei",handle:"MF9900",abilities:{str:14,dex:10,con:11,int:17,wis:10,cha:16},skills:["sword","performance","hiding"]},
-    {key:"evan",name:"Evan",handle:"Evballs",abilities:{str:14,dex:14,con:13,int:17,wis:11,cha:14},skills:["martial","shield","cooking"]},
-    {key:"cara",name:"Cara",handle:"Human Personson",abilities:{str:8,dex:12,con:10,int:18,wis:13,cha:11},skills:["dagger","medicine","alchemy"]},
-    {key:"aiden",name:"Aiden",handle:"",abilities:{str:10,dex:18,con:8,int:15,wis:16,cha:15},skills:["lockpicking"],free:["rapier","bow"]}
+    {key:"kevin",role:"Analyst",blurb:"Runs the odds before anyone moves, and the odds are usually bad. Honest to a fault, ride or die anyway.",name:"Kevin",handle:"Agent Tangerine",abilities:{str:10,dex:11,con:10,int:17,wis:13,cha:9},skills:["spear","appraisal","searching"]},
+    {key:"andrei",role:"Wildcard",blurb:"Nobody is sure how he got a slot, including him. Math PhD, debate menace, fake evil on purpose.",name:"Andrei",handle:"MF9900",abilities:{str:14,dex:10,con:11,int:17,wis:10,cha:16},skills:["sword","performance","hiding"]},
+    {key:"evan",role:"Vanguard",blurb:"The squad's fist and its heart. Mediates every fight he doesn't win outright and calls everyone doggo.",name:"Evan",handle:"Evballs",abilities:{str:14,dex:14,con:13,int:17,wis:11,cha:14},skills:["martial","shield","cooking"]},
+    {key:"cara",role:"Medic",blurb:"A walking encyclopedia with humor so niche it always lands. Keeps everyone breathing and says no when it counts.",name:"Cara",handle:"Human Personson",abilities:{str:8,dex:12,con:10,int:18,wis:13,cha:11},skills:["dagger","medicine","alchemy"]},
+    {key:"aiden",role:"Skirmisher",blurb:"Self-taught at everything: locks, blades, bows, piano. First through the door, usually before anyone agreed to open it.",name:"Aiden",handle:"",abilities:{str:10,dex:18,con:8,int:15,wis:16,cha:15},skills:["lockpicking"],free:["rapier","bow"]}
   ];
 
   const CATEGORIES = {

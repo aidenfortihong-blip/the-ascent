@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.2.3";
+  const VERSION = "0.3.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -741,7 +741,7 @@
   const pickedBy = actor => game.users.find(u => !u.isGM && u.character?.id === actor.id);
   const squadCount = () => prefabs().filter(x => pickedBy(x.actor)).length;
 
-  const select = {el:null,index:0,sound:null,soundSrc:null,flash:null};
+  const select = {el:null,index:0,talent:0,sound:null,soundSrc:null,flash:null};
 
   async function stopTheme() {
     const sound = select.sound;
@@ -787,62 +787,91 @@
     }
   }
 
-  function selectCard({p,actor},i) {
+  const hasArt = actor => !DEFAULT_IMG.test(actor.img);
+  const artOf = (actor,letter) => hasArt(actor)
+    ? '<img src="' + esc(actor.img) + '" alt="">'
+    : '<span class="asc-v-letter">' + esc(letter) + '</span>';
+
+  // Can this user lock in this character right now?
+  function lockState(actor) {
     const by = pickedBy(actor);
-    const mine = by?.isSelf;
-    const art = DEFAULT_IMG.test(actor.img)
-      ? '<div class="asc-sel-art is-blank"><span>' + esc(p.name[0]) + '</span></div>'
-      : '<div class="asc-sel-art"><img src="' + esc(actor.img) + '" alt=""></div>';
-    return '<button type="button" class="asc-sel-card' + (i === select.index ? " is-active" : "") + (by ? " is-taken" : "") + (mine ? " is-mine" : "") +
-      '" data-sel-index="' + i + '" aria-pressed="' + (i === select.index) + '" aria-label="' + esc(p.name) + (by ? ", picked by " + esc(by.name) : "") + '">' +
-      art +
-      '<span class="asc-sel-name"><b>' + esc(p.name) + '</b>' + (p.handle ? '<small>' + esc(p.handle) + '</small>' : '') + '</span>' +
-      (by ? '<span class="asc-sel-tag">' + (mine ? "YOU" : esc(by.name)) + '</span>' : '') +
-    '</button>';
+    if (game.user.isGM) return {ok:false};
+    if (by) return {ok:false,note:by.isSelf ? "This is you. See you inside." : "Picked by " + by.name + "."};
+    if (game.user.character) return {ok:false,note:"You are already " + game.user.character.name + "."};
+    if (squadCount() >= SQUAD_SIZE) return {ok:false,note:"The squad is full: the BD only takes four."};
+    return {ok:true};
   }
 
-  function selectDetail({p,actor}) {
+  // Bottom strip: one card per prefab.
+  function rosterCard({p,actor},i) {
     const by = pickedBy(actor);
-    const me = game.user;
-    const gm = me.isGM;
-    const full = squadCount() >= SQUAD_SIZE;
+    const active = i === select.index;
+    const lock = active && lockState(actor).ok;
+    return '<div class="asc-v-card' + (active ? " is-active" : "") + (by ? " is-taken" : "") + (by?.isSelf ? " is-mine" : "") + '">' +
+      '<button type="button" class="asc-v-hit" data-sel-index="' + i + '" aria-pressed="' + active + '" aria-label="' + esc(p.name) + (by ? ", picked by " + esc(by.name) : "") + '">' +
+        '<span class="asc-v-card-art">' + artOf(actor,p.name[0]) + '</span>' +
+        '<span class="asc-v-card-name">' + (by ? '<small>' + esc(by.isSelf ? "YOU" : by.name) + '</small>' : '') + '<b>' + esc(p.name) + '</b></span>' +
+      '</button>' +
+      (lock ? '<button type="button" class="asc-v-lock" data-sel="lock">LOCK IN</button>' : '') +
+    '</div>';
+  }
+
+  // Left column: everyone at the table and who they picked.
+  function squadList() {
+    const players = game.users.filter(u => !u.isGM);
+    const rows = players.map(u => {
+      const ch = u.character;
+      return '<li class="' + (u.isSelf ? "is-self" : "") + (ch ? " is-locked" : "") + (u.active ? "" : " is-away") + '">' +
+        '<span class="asc-v-hex">' + (ch ? artOf(ch,ch.name[0]) : '<i class="fa-solid fa-question"></i>') + '</span>' +
+        '<span><b>' + esc(u.name) + '</b><small>' + (ch ? esc(ch.name) + " // LOCKED" : u.active ? "PICKING" : "OFFLINE") + '</small></span>' +
+      '</li>';
+    });
+    for (let i = rows.length; i < SQUAD_SIZE; i++) {
+      rows.push('<li class="is-empty"><span class="asc-v-hex"><i class="fa-solid fa-plus"></i></span><span><b>Open slot</b><small>WAITING</small></span></li>');
+    }
+    return '<ul class="asc-v-squad" aria-label="Squad">' + rows.join("") + '</ul>';
+  }
+
+  function infoPanel({p,actor}) {
     const talents = C.TALENTS.filter(t => t.owner === p.key);
-    const skills = [...(p.free ?? []).map(k => [k,true]),...p.skills.map(k => [k,false])];
-    const stats = STAT_KEYS.map(k => {
-      const v = p.abilities[k];
-      return '<li><span>' + k.toUpperCase() + '</span><i><b style="width:' + Math.round(v / 20 * 100) + '%"></b></i><em>' + v + '</em></li>';
+    const t = talents[select.talent] ?? talents[0];
+    const theme = actor.flags?.[MODULE]?.theme;
+    const lock = lockState(actor);
+    const stats = STAT_KEYS.map(k =>
+      '<li><span>' + k.toUpperCase() + '</span><b>' + p.abilities[k] + '</b></li>').join("");
+    const skills = [...(p.free ?? []),...p.skills].map(k =>
+      '<span class="asc-v-skill" data-cat="' + C.SKILL[k].cat + '">' + esc(C.SKILL[k].name) + '</span>').join("");
+    const picks = prefabs().map(x => {
+      const by = pickedBy(x.actor);
+      return '<i class="' + (by ? "is-locked" : x.actor.id === actor.id ? "is-current" : "") + '" title="' + esc(x.p.name) + (by ? ": " + esc(by.name) : "") + '">' +
+        (by ? '<i class="fa-solid fa-check"></i>' : '') + '</i>';
     }).join("");
 
-    let action = "";
-    if (gm) {
-      action =
-        '<button type="button" data-sel="art"><i class="fa-solid fa-image"></i> SET PORTRAIT</button>' +
-        '<button type="button" data-sel="theme"><i class="fa-solid fa-music"></i> ' + (actor.flags?.[MODULE]?.theme ? "CHANGE THEME" : "SET THEME") + '</button>' +
-        '<label class="asc-sel-start">START AT <input type="number" min="0" step="1" value="' + (Number(actor.flags?.[MODULE]?.themeStart) || 0) + '" data-sel-start aria-label="Theme start, seconds"> s</label>' +
-        (by ? '<button type="button" data-sel="release"><i class="fa-solid fa-user-xmark"></i> RELEASE FROM ' + esc(by.name).toUpperCase() + '</button>' : '');
-    } else if (by) {
-      action = '<p class="asc-sel-note">' + (by.isSelf ? "This is you. See you inside." : "Picked by " + esc(by.name) + ".") + '</p>';
-    } else if (me.character) {
-      action = '<p class="asc-sel-note">You are already ' + esc(me.character.name) + '.</p>';
-    } else if (full) {
-      action = '<p class="asc-sel-note">The squad is full: the BD only takes four.</p>';
-    } else {
-      action = '<button type="button" class="asc-sel-lock" data-sel="lock">LOCK IN</button>';
-    }
+    const gm = game.user.isGM
+      ? '<div class="asc-v-gm">' +
+          '<button type="button" data-sel="art"><i class="fa-solid fa-image"></i> Portrait</button>' +
+          '<button type="button" data-sel="theme"><i class="fa-solid fa-music"></i> ' + (theme ? "Theme" : "Set theme") + '</button>' +
+          '<label>Start <input type="number" min="0" step="1" value="' + (Number(actor.flags?.[MODULE]?.themeStart) || 0) + '" data-sel-start aria-label="Theme start, seconds"> s</label>' +
+          (pickedBy(actor) ? '<button type="button" data-sel="release"><i class="fa-solid fa-user-xmark"></i> Release</button>' : '') +
+        '</div>'
+      : '';
 
-    const theme = actor.flags?.[MODULE]?.theme;
-    return '<section class="asc-sel-detail">' +
-      '<header><small>' + (p.handle ? esc(p.handle) : "NO HANDLE") + '</small><h2>' + esc(p.name) + '</h2>' +
-        (theme ? '<span class="asc-sel-playing"><i class="fa-solid fa-music"></i> ' + esc(decodeURIComponent(theme.split("/").pop()).replace(/\.[^.]+$/,"")) + '</span>' : '') +
-      '</header>' +
-      '<div class="asc-sel-cols">' +
-        '<div><small>STATS</small><ul class="asc-sel-stats">' + stats + '</ul>' +
-          '<p class="asc-sel-vitals"><span>HP <b>' + actor.system.attributes.hp.max + '</b></span><span>AC <b>' + actor.system.attributes.ac.value + '</b></span><span>SPEED <b>' + actor.system.attributes.movement.walk + '</b></span></p></div>' +
-        '<div><small>TALENTS</small><ul class="asc-sel-talents">' + talents.map(t => '<li><b>' + esc(t.name) + '</b> ' + esc(t.text) + '</li>').join("") + '</ul>' +
-          '<small>STARTING SKILLS</small><p class="asc-sel-skills">' + skills.map(([k,free]) =>
-            '<span class="asc-chip" data-cat="' + C.SKILL[k].cat + '">' + esc(C.SKILL[k].name) + (free ? " · FREE" : "") + '</span>').join("") + '</p></div>' +
+    return '<section class="asc-v-info">' +
+      '<small class="asc-v-role">' + esc(p.role ?? "Player") + (p.handle ? ' // ' + esc(p.handle) : '') + '</small>' +
+      '<h2>' + esc(p.name) + '</h2>' +
+      '<p class="asc-v-blurb">' + esc(p.blurb ?? "") + '</p>' +
+      '<div class="asc-v-talents" role="tablist" aria-label="Talents">' + talents.map((x,i) =>
+        '<button type="button" role="tab" aria-selected="' + (x === t) + '" class="' + (x === t ? "is-on" : "") + '" data-talent="' + i + '" aria-label="' + esc(x.name) + '" data-tooltip="' + esc(x.name) + '">' +
+          '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '"></i></button>').join("") +
       '</div>' +
-      '<footer>' + action + '</footer>' +
+      (t ? '<div class="asc-v-tip" role="tabpanel"><b>' + esc(t.name) + '</b><p>' + esc(t.text) + '</p></div>' : '') +
+      '<ul class="asc-v-stats">' + stats + '</ul>' +
+      '<p class="asc-v-vitals"><span>HP <b>' + actor.system.attributes.hp.max + '</b></span><span>AC <b>' + actor.system.attributes.ac.value + '</b></span><span>SPEED <b>' + actor.system.attributes.movement.walk + '</b></span></p>' +
+      '<div class="asc-v-skills">' + skills + '</div>' +
+      (theme ? '<p class="asc-v-playing"><i class="fa-solid fa-music"></i> ' + esc(decodeURIComponent(theme.split("/").pop()).replace(/\.[^.]+$/,"")) + '</p>' : '') +
+      (lock.note ? '<p class="asc-v-note">' + esc(lock.note) + '</p>' : '') +
+      gm +
+      '<div class="asc-v-picks"><small>SQUAD PICKS</small><span>' + picks + '</span></div>' +
     '</section>';
   }
 
@@ -854,25 +883,31 @@
       return;
     }
     select.index = Math.min(select.index,list.length - 1);
-    const scrollY = select.el.querySelector(".asc-sel-detail")?.scrollTop ?? 0;
+    const current = list[select.index];
+    const count = squadCount();
+    const ring = Math.round(count / SQUAD_SIZE * 100);
     select.el.innerHTML =
-      '<div class="asc-sel-bg" aria-hidden="true"></div>' +
-      '<header class="asc-sel-head">' +
-        '<div><small>BD LINK ESTABLISHED // UPPER BRACKET TRIAL</small><h1>SELECT YOUR PLAYER</h1></div>' +
-        '<span class="asc-sel-squad">SQUAD <b>' + squadCount() + ' / ' + SQUAD_SIZE + '</b></span>' +
-        '<button type="button" class="asc-sel-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' +
-      '</header>' +
-      '<div class="asc-sel-row" role="group" aria-label="Characters">' + list.map(selectCard).join("") + '</div>' +
-      selectDetail(list[select.index]) +
+      '<div class="asc-v-hero' + (hasArt(current.actor) ? "" : " is-blank") + '" aria-hidden="true">' + artOf(current.actor,current.p.name[0]) + '</div>' +
+      '<div class="asc-v-frame">' +
+        '<aside class="asc-v-left">' +
+          '<div class="asc-v-trial">' +
+            '<div><small>THE ASCENT</small><b>FLOOR ' + floor() + '</b><em>UPPER BRACKET TRIAL</em></div>' +
+            '<span class="asc-v-ring" style="--p:' + ring + '%" aria-label="Squad ' + count + ' of ' + SQUAD_SIZE + '"><b>' + count + '/' + SQUAD_SIZE + '</b></span>' +
+          '</div>' +
+          squadList() +
+        '</aside>' +
+        infoPanel(current) +
+        '<nav class="asc-v-roster" aria-label="Characters">' + list.map(rosterCard).join("") + '</nav>' +
+      '</div>' +
+      '<button type="button" class="asc-v-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' +
       (select.flash ? '<div class="asc-sel-flash"><span>' + esc(select.flash) + '</span></div>' : '');
-    const detail = select.el.querySelector(".asc-sel-detail");
-    if (detail) detail.scrollTop = scrollY;
   }
 
   async function choose(index) {
     const list = prefabs();
     if (!list[index]) return;
     select.index = index;
+    select.talent = 0;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
     await playTheme(list[index].actor);
@@ -887,6 +922,12 @@
   async function onSelectClick(event) {
     const card = event.target.closest("[data-sel-index]");
     if (card) return choose(Number(card.dataset.selIndex));
+    const talent = event.target.closest("[data-talent]");
+    if (talent) {
+      select.talent = Number(talent.dataset.talent);
+      renderSelect();
+      return select.el?.querySelector('[data-talent="' + select.talent + '"]')?.focus();
+    }
     const button = event.target.closest("[data-sel]");
     if (!button || button.disabled) return;
     const entry = prefabs()[select.index];
@@ -953,7 +994,7 @@
     const mine = list.findIndex(x => x.actor.id === game.user.character?.id);
     select.index = mine >= 0 ? mine : 0;
     renderSelect();
-    select.el.querySelector(".asc-sel-card.is-active")?.focus();
+    select.el.querySelector(".asc-v-card.is-active .asc-v-hit")?.focus();
     preloadThemes();
     if (list[select.index]) playTheme(list[select.index].actor);
   }
@@ -1051,6 +1092,7 @@
       CONFIG.queries[QUERY] = onSelectQuery;
       on("renderActorDirectory",addSelectButton);
       on("updateUser",(user,changed) => { if ("character" in changed) renderSelect(); });
+      on("userConnected",() => renderSelect());
       on("updateActor",(actor,changed) => {
         if (actor.flags?.[MODULE]?.prefab && ("img" in changed || "flags" in changed || "ownership" in changed)) renderSelect();
       });
