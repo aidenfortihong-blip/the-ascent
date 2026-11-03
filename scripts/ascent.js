@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.2.2";
+  const VERSION = "0.2.3";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -778,6 +778,15 @@
     }
   }
 
+  // Download and decode every theme once audio unlocks, so a click plays at once.
+  async function preloadThemes() {
+    await game.audio.unlock;
+    for (const {actor} of prefabs()) {
+      const src = actor.flags?.[MODULE]?.theme;
+      if (src) new foundry.audio.Sound(src,{context:game.audio.music}).load().catch(() => {});
+    }
+  }
+
   function selectCard({p,actor},i) {
     const by = pickedBy(actor);
     const mine = by?.isSelf;
@@ -945,6 +954,7 @@
     select.index = mine >= 0 ? mine : 0;
     renderSelect();
     select.el.querySelector(".asc-sel-card.is-active")?.focus();
+    preloadThemes();
     if (list[select.index]) playTheme(list[select.index].actor);
   }
 
