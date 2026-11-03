@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.5.3";
+  const VERSION = "0.6.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -28,9 +28,14 @@
   const hasTalent = (actor,key) => actor?.items?.some(i => i.flags?.[MODULE]?.talent === key);
 
   function slotted(actor) {
-    return Object.entries(skillsOf(actor))
+    const list = Object.entries(skillsOf(actor))
       .filter(([key,s]) => s.slotted && C.SKILL[key])
       .map(([key,s]) => ({key,...s,def:C.SKILL[key]}));
+    const borrowed = flags(actor).borrowed;
+    if (borrowed && C.SKILL[borrowed] && !list.some(s => s.key === borrowed)) {
+      list.push({key:borrowed,rank:5,ticks:0,slotted:true,free:true,borrowed:true,finisher:null,def:C.SKILL[borrowed]});
+    }
+    return list;
   }
 
   function slotInfo(actor) {
@@ -160,31 +165,38 @@
     await writeSkill(actor,key,{finisher:index});
   }
 
-  async function hotSwap(actor,inKey) {
-    if (!hasTalent(actor,"hotswap")) return;
-    if (flags(actor).hotSwapUsed) return ui.notifications.warn("Hot Swap is used until your next long rest.");
-    const options = slotted(actor).filter(s => !s.free);
-    if (!options.length) return;
-    const outKey = await foundry.applications.api.DialogV2.prompt({
-      window:{title:"Hot Swap: " + C.SKILL[inKey].name},
-      content:'<p>Swap out which skill?</p><select name="out">' +
-        options.map(s => '<option value="' + s.key + '">' + esc(s.def.name) + ' ' + ROMAN[s.rank] + '</option>').join("") +
-        '</select>',
-      ok:{label:"Swap",callback:(event,button) => button.form.elements.out.value},
+  // HOT SWAP (Cara): once per long rest, borrow any unlocked skill she has not
+  // slotted, as if it were rank V, for one use: one check, one Technique or
+  // one perk. It shows as a BORROWED card until used or ended.
+  async function hotSwap(actor) {
+    if (!hasTalent(actor,"hotswap") || !canEdit(actor)) return;
+    if (flags(actor).borrowed) return ui.notifications.warn("A skill is already borrowed. Use it or end it first.");
+    if (flags(actor).hotSwapUsed) return ui.notifications.warn("Hot Swap is spent until your next long rest.");
+    const have = new Set(slotted(actor).map(x => x.key));
+    const options = C.SKILLS.filter(def => !have.has(def.key) && !isLocked(def));
+    const groups = Object.entries(C.CATEGORIES).map(([cat,label]) => {
+      const defs = options.filter(d => d.cat === cat);
+      return defs.length ? '<optgroup label="' + esc(label) + '">' + defs.map(d => '<option value="' + d.key + '">' + esc(d.name) + '</option>').join("") + '</optgroup>' : '';
+    }).join("");
+    const key = await foundry.applications.api.DialogV2.prompt({
+      window:{title:"Hot Swap"},
+      content:'<p>Borrow a skill at rank V for one use: one check, one Technique or one perk.</p><select name="skill">' + groups + '</select>',
+      ok:{label:"Borrow",callback:(event,button) => button.form.elements.skill.value},
       rejectClose:false
     });
-    if (!outKey) return;
-    const all = skillsOf(actor);
-    await actor.update({
-      ["flags."+MODULE+".skills."+outKey]:{...all[outKey],slotted:false},
-      ["flags."+MODULE+".skills."+inKey]:{...all[inKey],slotted:true},
-      ["flags."+MODULE+".hotSwapUsed"]:true
-    });
+    if (!key || !C.SKILL[key]) return;
+    await actor.update({["flags."+MODULE+".borrowed"]:key,["flags."+MODULE+".hotSwapUsed"]:true});
     await syncEffect(actor);
     ChatMessage.create({
       speaker:ChatMessage.getSpeaker({actor}),
-      content:'<div class="asc-chat"><small>HOT SWAP</small><p>' + esc(C.SKILL[outKey].name) + ' &rarr; ' + esc(C.SKILL[inKey].name) + '</p></div>'
+      content:'<div class="asc-chat" data-cat="' + C.SKILL[key].cat + '"><small>HOT SWAP</small><h3>' + esc(C.SKILL[key].name) + ' V</h3><p>Borrowed at rank V for one use.</p></div>'
     });
+  }
+
+  async function endBorrow(actor) {
+    if (!flags(actor).borrowed || !canEdit(actor)) return;
+    await actor.update({["flags."+MODULE+".borrowed"]:null});
+    await syncEffect(actor);
   }
 
   // ---------- techniques ----------
@@ -201,11 +213,14 @@
 
   const inCombat = actor => !!game.combat?.started && game.combat.combatants.some(c => c.actor?.id === actor.id);
 
-  async function useTechnique(actor,key,rank) {
+  async function useTechnique(actor,key,rank,finisherIndex = null) {
     const s = slotted(actor).find(x => x.key === key);
     if (!s || !canEdit(actor)) return;
-    const tech = techniquesOf(actor,s).find(t => t.rank === rank);
+    const tech = s.borrowed && rank === 5
+      ? s.def.finishers[finisherIndex ?? 0]
+      : techniquesOf(actor,s).find(t => t.rank === rank);
     if (!tech) return;
+    if (s.borrowed) await endBorrow(actor);
     const spent = flags(actor).spent ?? {};
     if (spent[techKey(key,rank)]) return ui.notifications.warn(tech.name + " is recharging.");
 
@@ -449,6 +464,13 @@
     const def = s.def;
     if (def.cat !== "weapon") return "";
     const spent = flags(actor).spent ?? {};
+    if (s.borrowed) {
+      return '<ol class="asc-techs">' + [...def.tech,...def.finishers].map((t,i) => {
+        const fin = i >= def.tech.length;
+        return '<li class="on' + (fin ? " is-finisher" : "") + '"><b>' + ROMAN[t.rank] + '</b><span><strong>' + esc(t.name) + '</strong> ' + esc(t.text) + '</span>' +
+          '<button type="button" data-asc="use" data-key="' + def.key + '" data-rank="' + t.rank + '"' + (fin ? ' data-index="' + (i - def.tech.length) + '"' : '') + '>USE</button></li>';
+      }).join("") + '</ol>';
+    }
     const rows = def.tech.map(t => {
       const open = t.rank <= s.rank;
       const isSpent = spent[techKey(def.key,t.rank)];
@@ -478,6 +500,19 @@
   function skillCard(actor,s) {
     const def = s.def;
     const gm = game.user.isGM;
+    if (s.borrowed) {
+      return '<article class="asc-card is-borrowed" data-cat="' + def.cat + '">' +
+        '<header>' +
+          '<i class="asc-icon ' + esc(def.icon) + '"></i>' +
+          '<div class="asc-title"><small>HOT SWAP // BORROWED // ONE USE</small><h4>' + esc(def.name) + '</h4></div>' +
+          rankPips(5) +
+        '</header>' +
+        '<div class="asc-row"><span class="asc-ticks">' + (def.cat === "weapon" ? "Use one Technique, finishers included." : "One check or one perk at rank V.") + '</span>' +
+          (canEdit(actor) ? '<span class="asc-gm"><button type="button" data-asc="endborrow" title="The borrowed use is spent">USED / END</button></span>' : '') +
+        '</div>' +
+        techList(actor,s) + perkList(s) +
+      '</article>';
+    }
     return '<article class="asc-card" data-cat="' + def.cat + '">' +
       '<header>' +
         '<i class="asc-icon ' + esc(def.icon) + '"></i>' +
@@ -537,12 +572,17 @@
         '<button type="button" class="asc-browse" data-asc="picker"><i class="fa-solid fa-book-open"></i> ALL SKILLS</button>' +
       '</header>' +
       (talents.length ? '<div class="asc-talents"><small>TALENTS</small>' + talents.map(t =>
-        '<span class="asc-talent" data-tooltip="' + esc(foundry.utils.stripHTML?.(t.system.description.value) ?? "") + '">' + esc(t.name) + '</span>').join("") + '</div>' : '') +
+        '<span class="asc-talent" data-tooltip="' + esc(foundry.utils.stripHTML?.(t.system.description.value) ?? "") + '">' + esc(t.name) + '</span>').join("") +
+        (swap && owner && !flags(actor).borrowed
+          ? (flags(actor).hotSwapUsed
+            ? '<span class="asc-talent is-spent">HOT SWAP SPENT</span>'
+            : '<button type="button" class="asc-hotswap" data-asc="hotswap"><i class="fa-solid fa-repeat"></i> HOT SWAP</button>')
+          : '') +
+        '</div>' : '') +
       '<div class="asc-grid">' + list.map(s => skillCard(actor,s)).join("") + empty + '</div>' +
       (known.length ? '<div class="asc-stored"><small>STORED SKILLS (KEEP THEIR RANK)</small>' + known.map(([k,s]) =>
         '<span class="asc-chip" data-cat="' + C.SKILL[k].cat + '">' + esc(C.SKILL[k].name) + ' ' + ROMAN[s.rank] +
           (info.open && owner ? ' <button type="button" data-asc="slot" data-key="' + k + '">SLOT</button>' : '') +
-          (swap && owner && !flags(actor).hotSwapUsed ? ' <button type="button" data-asc="hotswap" data-key="' + k + '">HOT SWAP</button>' : '') +
         '</span>').join("") + '</div>' : '') +
       '<div class="asc-combos"><small>COMBO SKILLS // TWO SKILLS AT RANK III</small>' +
         (combos.length ? combos.map(c =>
@@ -562,9 +602,10 @@
       case "tick": return addTicks(actor,key,n);
       case "rank": return setRank(actor,key,(skillsOf(actor)[key]?.rank ?? 1) + n);
       case "level": return setLevel(actor,levelOf(actor) + n);
-      case "use": return useTechnique(actor,key,Number(button.dataset.rank));
+      case "use": return useTechnique(actor,key,Number(button.dataset.rank),button.dataset.index != null ? Number(button.dataset.index) : null);
       case "finisher": return chooseFinisher(actor,key,Number(button.dataset.index));
-      case "hotswap": return hotSwap(actor,key);
+      case "hotswap": return hotSwap(actor);
+      case "endborrow": return endBorrow(actor);
     }
   }
 
@@ -1347,7 +1388,9 @@
         if (!canEdit(actor)) return;
         const long = result?.longRest ?? config?.type === "long";
         clearFight(actor).catch(() => {});
-        if (long && flags(actor).hotSwapUsed) actor.update({["flags."+MODULE+".hotSwapUsed"]:false});
+        if (long && (flags(actor).hotSwapUsed || flags(actor).borrowed)) {
+          actor.update({["flags."+MODULE+".hotSwapUsed"]:false,["flags."+MODULE+".borrowed"]:null}).then(() => syncEffect(actor));
+        }
       });
       refresh();
     },

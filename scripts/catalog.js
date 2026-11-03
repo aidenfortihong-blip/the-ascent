@@ -311,7 +311,7 @@
     {key:"doggo",icon:"fa-solid fa-dog",owner:"evan",name:"Doggo",text:"Advantage on Persuasion checks."},
     {key:"mentalmath",icon:"fa-solid fa-calculator",owner:"cara",name:"Mental Math",text:"Once per short rest, after seeing any ally's roll, add or subtract 2."},
     {key:"wiki",icon:"fa-solid fa-book-open",owner:"cara",name:"Walking Wiki",text:"Advantage on all lore and knowledge checks."},
-    {key:"hotswap",icon:"fa-solid fa-repeat",owner:"cara",name:"Hot Swap",text:"Once per long rest, at any moment, even mid-fight, swap one slotted skill for another you know. It keeps its rank."},
+    {key:"hotswap",icon:"fa-solid fa-repeat",owner:"cara",name:"Hot Swap",text:"Once per long rest, use any unlocked skill you do not have slotted as if it were rank V, for one use: one check, one Technique or one perk."},
     {key:"rt107",icon:"fa-solid fa-bolt",owner:"aiden",name:".107",text:"Always first in initiative."},
     {key:"clipthat",icon:"fa-solid fa-video",owner:"aiden",name:"Clip That",text:"Once per fight, declare an attack a critical hit before rolling."},
     {key:"selftaught",icon:"fa-solid fa-graduation-cap",owner:"aiden",name:"Self-Taught",text:"Skills need about half the ticks to rank up. Once per floor, after watching someone use a skill well, gain a tick in it."}
