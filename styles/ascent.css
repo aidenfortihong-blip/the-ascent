@@ -1335,7 +1335,7 @@
 .asc-th-arrow { position: absolute; top: 50%; display: grid; place-items: center; width: 34px; height: 46px; margin-top: -23px; font-family: var(--th-serif); font-style: normal; font-size: 15px; font-weight: 600; color: #fff; background: linear-gradient(135deg, #8d7fd6, #5a4c9e); filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4)); }
 .asc-th-arrow.l { left: -18px; clip-path: polygon(100% 0, 100% 100%, 0 50%); padding-left: 10px; }
 .asc-th-arrow.r { right: -18px; clip-path: polygon(0 0, 0 100%, 100% 50%); padding-right: 10px; }
-.asc-th-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.05fr 1fr 1fr; gap: 26px; padding: 14px 20px 16px; overflow-y: auto; scrollbar-width: thin; }
+.asc-th-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.05fr 1fr 1fr; gap: 24px; padding: 10px 20px 10px; overflow-y: auto; scrollbar-width: thin; }
 .asc-th-col { min-width: 0; }
 .asc-th-col h3 {
   margin: 0 0 8px;
@@ -1347,11 +1347,11 @@
   background: linear-gradient(90deg, #8d877c, rgba(141, 135, 124, 0.15));
   border: 0;
 }
-.asc-th-col h3:not(:first-child) { margin-top: 14px; }
+.asc-th-col h3:not(:first-child) { margin-top: 10px; }
 
 .asc-th-name { margin: 0 0 6px; padding-bottom: 2px; font-size: 18px; border-bottom: 1px solid var(--th-line); }
-.asc-th-who { display: grid; grid-template-columns: 112px 1fr; align-items: center; gap: 12px; }
-.asc-th-medal { width: 112px; height: 112px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 4px #f8f3e8, 0 0 0 6px rgba(120, 105, 80, 0.4); }
+.asc-th-who { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 12px; }
+.asc-th-medal { width: 96px; height: 96px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 4px #f8f3e8, 0 0 0 6px rgba(120, 105, 80, 0.4); }
 .asc-th-medal img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 6%; border: 0; }
 .asc-th-col dl { margin: 0; display: grid; gap: 4px; }
 .asc-th-col dl > div { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dotted var(--th-line); }
