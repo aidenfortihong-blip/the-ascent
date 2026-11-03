@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.12.4";
+  const VERSION = "0.12.5";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1150,6 +1150,7 @@
 
   // EVAN: a parchment unit status window filling the stage.
   const RANK_LETTER = ["","E","D","C","B","A"];
+  const EVAN_TABS = ["status","skills","classes","notes"];
   const EVAN_ART = "https://assets.forge-vtt.com/600d963af3cd821ef5bfb19a/Ascent/evan/";
 
   function evanStage({p,actor}) {
@@ -1180,43 +1181,74 @@
       const r = skills[k]?.rank ?? 1;
       return '<li><i class="' + esc(C.SKILL[k].icon) + '"></i><span>' + esc(C.SKILL[k].name) + '</span><em><b style="width:' + (r * 20) + '%"></b></em><strong>' + RANK_LETTER[r] + '</strong></li>';
     }).join("");
+    // Tabs: the left column (who he is, his stats) stays; the other two change.
+    const tab = EVAN_TABS.includes(select.evanTab) ? select.evanTab : "skills";
+    const info = slotInfo(actor);
+    const cap = C.rankCapAt(lv);
+    const nextSlot = [3,6,9,12,15].find(x => x > lv);
+    const gear = actor.items.filter(i => (i.type === "weapon" || i.type === "equipment") && i.system.equipped)
+      .map(i => '<li><i class="fa-solid ' + (i.type === "weapon" ? "fa-khanda" : "fa-shield-halved") + '"></i><span>' + esc(i.name) + '</span><small>' + (i.type === "weapon" ? "Weapon" : "Armor") + '</small></li>').join("");
+    const progress = slotted(actor).map(x => {
+      const need = ticksToNext(actor,x.rank);
+      return '<li><i class="' + esc(x.def.icon) + '"></i><span>' + esc(x.def.name) + '</span><em><b style="width:' + (need ? Math.min(100,Math.round(100 * x.ticks / need)) : 100) + '%"></b></em><strong>' + RANK_LETTER[x.rank] + '</strong></li>';
+    }).join("");
+    const combos = combosFor(actor).filter(c => c.started);
+    let middle, right;
+    if (tab === "status") {
+      middle = head("Combat") +
+        '<dl class="asc-th-facts"><div><dt>Hit Points</dt><dd>' + sys.hp.value + ' / ' + sys.hp.max + '</dd></div><div><dt>Armor Class</dt><dd>' + sys.ac.value + '</dd></div>' +
+        '<div><dt>Speed</dt><dd>' + sys.movement.walk + ' ft</dd></div><div><dt>Initiative</dt><dd>' + (sys.init?.total >= 0 ? "+" : "") + (sys.init?.total ?? 0) + '</dd></div>' +
+        '<div><dt>Proficiency</dt><dd>+' + sys.prof + '</dd></div></dl>';
+      right = head("Equipment") + '<ul class="asc-th-techs">' + (gear || '<li class="is-empty"></li>') + '</ul>';
+    } else if (tab === "classes") {
+      middle = head("Skill Slots") +
+        '<dl class="asc-th-facts"><div><dt>Slots used</dt><dd>' + info.used + ' / ' + info.total + '</dd></div><div><dt>Next slot</dt><dd>' + (nextSlot ? "Level " + nextSlot : "All open") + '</dd></div>' +
+        '<div><dt>Rank cap</dt><dd>' + RANK_LETTER[cap] + '</dd></div><div><dt>Level</dt><dd>' + lv + '</dd></div></dl>' +
+        head("Combos") + '<ul class="asc-th-techs">' + (combos.length ? combos.map(c => '<li class="' + (c.active ? "" : "is-dim") + '"><i class="fa-solid fa-link"></i><span>' + esc(c.name) + '</span><small>' + (c.active ? "Unlocked" : esc(comboLabel(c))) + '</small></li>').join("") : '<li class="is-empty"></li>') + '</ul>';
+      right = head("Rank Progress") + '<ul class="asc-th-levels">' + progress + '</ul>';
+    } else if (tab === "notes") {
+      middle = head("Notes") + '<p class="asc-th-desc asc-th-notes">' + esc(p.blurb ?? "") + '</p>';
+      right = head("Talents") + talents.map(x => '<p class="asc-th-desc"><b>' + esc(x.name) + '</b>' + esc(x.text) + '</p>').join("");
+    } else {
+      middle = head("Talents") +
+        '<div class="asc-th-list" role="tablist" aria-label="Talents">' + talentRows + '</div>' +
+        head("Techniques") +
+        '<ul class="asc-th-techs">' + techRows + '</ul>';
+      right = head("Skill Level") +
+        '<ul class="asc-th-levels">' + levels + '</ul>' +
+        (t ? '<p class="asc-th-desc" role="tabpanel"><b>' + esc(t.name) + '</b>' + esc(t.text) + '</p>' : '');
+    }
+    const tabs = EVAN_TABS.map(id => '<button type="button" class="' + (id === tab ? "is-on" : "") + '" data-evtab="' + id + '" aria-pressed="' + (id === tab) + '">' + id.charAt(0).toUpperCase() + id.slice(1) + '</button>').join("");
     return '<div class="asc-th' + (select.evanShown ? " is-shown" : "") + '">' +
       '<section class="asc-th-win">' +
         '<header class="asc-th-bar"><span class="asc-th-tab"><span class="asc-th-crest" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span><b>' + esc(p.name) + '</b></span>' +
-          '<nav aria-hidden="true"><span class="asc-th-shoulder">L</span><span>Status</span><span class="is-on">Skills</span><span>Classes</span><span>Notes</span><span class="asc-th-shoulder">R</span></nav></header>' +
+          '<nav aria-label="Status pages"><button type="button" class="asc-th-shoulder" data-evtab="prev" aria-label="Previous page">L</button>' + tabs +
+          '<button type="button" class="asc-th-shoulder" data-evtab="next" aria-label="Next page">R</button></nav></header>' +
         '<div class="asc-th-body">' +
           '<div class="asc-th-col">' +
             head("Personal Information") +
             '<p class="asc-th-name">' + esc(p.name) + '</p>' +
             '<div class="asc-th-who">' +
               '<span class="asc-th-medal">' + artOf(actor,p.name[0]) + '</span>' +
-              '<dl><div><dt>Alias</dt><dd>' + esc(p.handle || "-") + '</dd></div><div><dt>Floor</dt><dd>' + floor() + '</dd></div><div><dt>Squad</dt><dd>' + squadCount() + '/' + SQUAD_SIZE + '</dd></div></dl>' +
+              '<dl><div><dt>Alias</dt><dd>' + esc(p.handle || "-") + '</dd></div><div><dt>Class</dt><dd>' + esc(p.role ?? "Player") + ' <span class="asc-th-mini" style="background-image:url(' + EVAN_ART + 'evan-sprite.png)"></span></dd></div>' +
+              '<div><dt>Affiliation</dt><dd>Upper Bracket</dd></div><div><dt>Floor</dt><dd>' + floor() + '</dd></div><div><dt>Squad</dt><dd>' + squadCount() + '/' + SQUAD_SIZE + '</dd></div></dl>' +
             '</div>' +
-            '<dl class="asc-th-rows">' +
-              '<div><dt>Class</dt><dd>' + esc(p.role ?? "Player") + ' <span class="asc-th-mini" style="background-image:url(' + EVAN_ART + 'evan-sprite.png)"></span></dd></div>' +
-              '<div><dt>Affiliation</dt><dd>Upper Bracket</dd></div>' +
-            '</dl>' +
             '<div class="asc-th-lv"><span>Lv</span><b>' + lv + '</b><span>Exp</span><i><em style="width:0%"></em></i></div>' +
             '<div class="asc-th-hp"><span class="asc-th-hpbox">HP <b>' + sys.hp.max + '</b></span><span>AC <b>' + sys.ac.value + '</b></span><span>Speed <b>' + sys.movement.walk + '</b> ft</span></div>' +
             head("Stats") +
             '<ul class="asc-th-stats">' + stats + '</ul>' +
           '</div>' +
-          '<div class="asc-th-col">' +
-            head("Talents") +
-            '<div class="asc-th-list" role="tablist" aria-label="Talents">' + talentRows + '</div>' +
-            head("Techniques") +
-            '<ul class="asc-th-techs">' + techRows + '</ul>' +
-            (lock.note ? '<p class="asc-th-note">' + esc(lock.note) + '</p>' : '') +
-            gmTools(actor) +
-          '</div>' +
-          '<div class="asc-th-col">' +
-            head("Skill Level") +
-            '<ul class="asc-th-levels">' + levels + '</ul>' +
-            (t ? '<p class="asc-th-desc" role="tabpanel"><b>' + esc(t.name) + '</b>' + esc(t.text) + '</p>' : '') +
-          '</div>' +
+          '<div class="asc-th-col">' + middle + (lock.note ? '<p class="asc-th-note">' + esc(lock.note) + '</p>' : '') + '</div>' +
+          '<div class="asc-th-col">' + right + '</div>' +
         '</div>' +
-        '<footer class="asc-th-hints" aria-hidden="true"><span><kbd>X</kbd> Details</span><span><kbd>A</kbd> Deploy</span><span><kbd>B</kbd> Back</span></footer>' +
-        '<i class="asc-th-arrow l" aria-hidden="true">L</i><i class="asc-th-arrow r" aria-hidden="true">R</i>' +
+        '<footer class="asc-th-hints">' +
+          '<div class="asc-th-gm">' + gmTools(actor) + '</div>' +
+          '<button type="button" data-evtab="notes"><kbd>X</kbd> Details</button>' +
+          '<button type="button" data-sel="lock"' + (lock.ok ? '' : ' disabled title="' + esc(lock.note ?? "Players lock in from here") + '"') + '><kbd>A</kbd> Deploy</button>' +
+          '<button type="button" data-sel="close"><kbd>B</kbd> Back</button>' +
+        '</footer>' +
+        '<button type="button" class="asc-th-arrow l" data-evnav="-1" aria-label="Previous character">L</button>' +
+        '<button type="button" class="asc-th-arrow r" data-evnav="1" aria-label="Next character">R</button>' +
       '</section>' +
     '</div>';
   }
@@ -1330,6 +1362,18 @@
   }
 
   async function onSelectClick(event) {
+    const evtab = event.target.closest("[data-evtab]");
+    if (evtab) {
+      const current = EVAN_TABS.indexOf(select.evanTab ?? "skills");
+      const step = {prev:-1,next:1}[evtab.dataset.evtab];
+      select.evanTab = step ? EVAN_TABS[(Math.max(0,current) + step + EVAN_TABS.length) % EVAN_TABS.length] : evtab.dataset.evtab;
+      return renderSelect();
+    }
+    const evnav = event.target.closest("[data-evnav]");
+    if (evnav) {
+      const n = prefabs().length;
+      return choose((select.index + Number(evnav.dataset.evnav) + n) % n);
+    }
     const card = event.target.closest("[data-sel-index]");
     if (card) return choose(Number(card.dataset.selIndex));
     const talent = event.target.closest("[data-talent]");
