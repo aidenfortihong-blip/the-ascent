@@ -1069,6 +1069,7 @@
     if (!list[index]) return;
     select.index = index;
     select.talent = 0;
+    select.caraIntroDone = false;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
     await playTheme(list[index].actor);
