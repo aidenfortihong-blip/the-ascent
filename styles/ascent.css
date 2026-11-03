@@ -1114,7 +1114,7 @@
 @keyframes asc-ca-grid { to { transform: translate(48px, 48px); } }
 
 /* the portrait sits on the text box: same white frame, its bottom edge laid over the box edge */
-.asc-ca-arena { position: relative; z-index: 1; width: 100%; height: 100%; min-height: 120px; margin-bottom: -18px; overflow: hidden; }
+.asc-ca-arena { position: relative; z-index: 1; align-self: stretch; width: 100%; min-height: 120px; margin-bottom: -18px; overflow: hidden; }
 .asc-ca-sprite, .asc-ca-real {
   position: absolute;
   left: 0;
