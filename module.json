@@ -1,0 +1,30 @@
+{
+  "id": "the-ascent",
+  "title": "The Ascent",
+  "description": "Campaign runtime for The Ascent: skill slots, ranks, techniques and the game-world menus. Loads the live build from GitHub on every client.",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "Aiden"
+    }
+  ],
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system"
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/bootstrap.js"
+  ],
+  "socket": true,
+  "url": "https://github.com/aidenfortihong-blip/the-ascent",
+  "manifest": "https://raw.githubusercontent.com/aidenfortihong-blip/the-ascent/main/module.json",
+  "download": "https://raw.githubusercontent.com/aidenfortihong-blip/the-ascent/main/dist/the-ascent.zip"
+}
