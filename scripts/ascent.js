@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.8.1";
+  const VERSION = "0.8.2";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1186,7 +1186,10 @@
       '<div class="asc-st-sky" aria-hidden="true"></div>' +
       '<div class="asc-st-left">' +
         trigramRing() +
-        '<div class="asc-st-portrait">' + artOf(actor,p.name[0]) + '</div>' +
+        // A cut-out (flags cutout) stands in front of the circle; otherwise the framed portrait.
+        (actor.flags?.[MODULE]?.cutout
+          ? '<div class="asc-st-portrait is-cut"><img src="' + esc(actor.flags[MODULE].cutout) + '" alt=""></div>'
+          : '<div class="asc-st-portrait">' + artOf(actor,p.name[0]) + '</div>') +
       '</div>' +
       '<section class="asc-st-scroll">' +
         '<header class="asc-st-top"><span>THE ASCENT</span><span>FLOOR ' + floor() + '</span><span>SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
