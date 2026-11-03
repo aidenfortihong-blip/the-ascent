@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.12.3";
+  const VERSION = "0.12.4";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1164,20 +1164,29 @@
       const v = p.abilities[k];
       return '<li><span>' + k.charAt(0).toUpperCase() + k.slice(1) + '</span><i><em style="width:' + Math.round(v / 20 * 100) + '%"></em></i><b>' + v + '</b></li>';
     }).join("");
+    // How often a Talent can be used, read from its text, shown like magic uses.
+    const uses = text => /once per fight/i.test(text) ? "1 / fight" : /short rest/i.test(text) ? "1 / rest" :
+      /long rest/i.test(text) ? "1 / day" : /once per floor/i.test(text) ? "1 / floor" : "Passive";
     const talentRows = talents.map((x,i) =>
       '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '">' +
-        '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '"></i><span>' + esc(x.name) + '</span></button>').join("");
+        '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '"></i><span>' + esc(x.name) + '</span><small>' + uses(x.text) + '</small></button>').join("");
+    // Techniques he has unlocked, like a class-specific magic list; empty rows pad it.
+    const techs = slotted(actor).filter(x => x.def.cat === "weapon").flatMap(x => techniquesOf(actor,x).map(tq => [tq,x.def]));
+    const techRows = techs.map(([tq,def]) =>
+      '<li><i class="' + esc(def.icon) + '"></i><span>' + esc(tq.name) + '</span><small>' + (tq.rank <= 2 ? "At will" : tq.rank <= 4 ? "5-6" : "1 / fight") + '</small></li>').join("") +
+      '<li class="is-empty"></li>'.repeat(Math.max(0,3 - techs.length));
+    const head = title => '<h3><i class="fa-solid fa-sun" aria-hidden="true"></i>' + title + '</h3>';
     const levels = [...(p.free ?? []),...p.skills].map(k => {
       const r = skills[k]?.rank ?? 1;
       return '<li><i class="' + esc(C.SKILL[k].icon) + '"></i><span>' + esc(C.SKILL[k].name) + '</span><em><b style="width:' + (r * 20) + '%"></b></em><strong>' + RANK_LETTER[r] + '</strong></li>';
     }).join("");
     return '<div class="asc-th' + (select.evanShown ? " is-shown" : "") + '">' +
       '<section class="asc-th-win">' +
-        '<header class="asc-th-bar"><span class="asc-th-crest" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span><b>' + esc(p.name) + '</b>' +
-          '<nav aria-hidden="true"><span>Status</span><span class="is-on">Skills</span><span>Notes</span></nav></header>' +
+        '<header class="asc-th-bar"><span class="asc-th-tab"><span class="asc-th-crest" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span><b>' + esc(p.name) + '</b></span>' +
+          '<nav aria-hidden="true"><span class="asc-th-shoulder">L</span><span>Status</span><span class="is-on">Skills</span><span>Classes</span><span>Notes</span><span class="asc-th-shoulder">R</span></nav></header>' +
         '<div class="asc-th-body">' +
           '<div class="asc-th-col">' +
-            '<h3>Personal Information</h3>' +
+            head("Personal Information") +
             '<p class="asc-th-name">' + esc(p.name) + '</p>' +
             '<div class="asc-th-who">' +
               '<span class="asc-th-medal">' + artOf(actor,p.name[0]) + '</span>' +
@@ -1188,21 +1197,22 @@
               '<div><dt>Affiliation</dt><dd>Upper Bracket</dd></div>' +
             '</dl>' +
             '<div class="asc-th-lv"><span>Lv</span><b>' + lv + '</b><span>Exp</span><i><em style="width:0%"></em></i></div>' +
-            '<div class="asc-th-hp"><span class="asc-th-hpbox">HP <b>' + sys.hp.max + '</b></span><span>Mv <b>' + Math.round(sys.movement.walk / 5) + '</b></span><span>Def <b>' + sys.ac.value + '</b></span></div>' +
-            '<h3>Stats</h3>' +
+            '<div class="asc-th-hp"><span class="asc-th-hpbox">HP <b>' + sys.hp.max + '</b></span><span>AC <b>' + sys.ac.value + '</b></span><span>Speed <b>' + sys.movement.walk + '</b> ft</span></div>' +
+            head("Stats") +
             '<ul class="asc-th-stats">' + stats + '</ul>' +
           '</div>' +
           '<div class="asc-th-col">' +
-            '<h3>Talents</h3>' +
+            head("Talents") +
             '<div class="asc-th-list" role="tablist" aria-label="Talents">' + talentRows + '</div>' +
-            '<h3>Details</h3>' +
-            (t ? '<p class="asc-th-desc" role="tabpanel"><b>' + esc(t.name) + '</b>' + esc(t.text) + '</p>' : '') +
+            head("Techniques") +
+            '<ul class="asc-th-techs">' + techRows + '</ul>' +
             (lock.note ? '<p class="asc-th-note">' + esc(lock.note) + '</p>' : '') +
             gmTools(actor) +
           '</div>' +
           '<div class="asc-th-col">' +
-            '<h3>Skill Level</h3>' +
+            head("Skill Level") +
             '<ul class="asc-th-levels">' + levels + '</ul>' +
+            (t ? '<p class="asc-th-desc" role="tabpanel"><b>' + esc(t.name) + '</b>' + esc(t.text) + '</p>' : '') +
           '</div>' +
         '</div>' +
         '<footer class="asc-th-hints" aria-hidden="true"><span><kbd>X</kbd> Details</span><span><kbd>A</kbd> Deploy</span><span><kbd>B</kbd> Back</span></footer>' +
