@@ -1514,11 +1514,12 @@
 .asc-ink-name h2 {
   margin: 0;
   writing-mode: vertical-rl;
+  text-orientation: upright;
   font-family: var(--ink-brush) !important;
-  font-size: clamp(84px, 9vw, 150px);
+  font-size: clamp(64px, 7vw, 108px);
   font-weight: 400;
-  line-height: 0.9;
-  letter-spacing: 0.04em;
+  line-height: 1;
+  letter-spacing: -0.04em;
   color: var(--ink-black);
   border: 0;
   text-shadow: 2px 2px 0 rgba(26, 31, 44, 0.15);
@@ -1552,9 +1553,9 @@
 .asc-ink-info header { display: flex; gap: 18px; font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); }
 .asc-ink-info header span:first-child { color: var(--ink-red); }
 .asc-ink-role { margin: 10px 0 0; font-size: 22px; font-weight: 600; color: var(--ink-indigo); }
-.asc-ink-blurb { margin: 8px 0 0; font-size: 19px; line-height: 1.55; color: var(--ink-black); }
+.asc-ink-blurb { margin: 6px 0 0; font-size: 17px; line-height: 1.55; color: var(--ink-black); }
 
-.asc-ink-seals { display: flex; gap: 16px; margin-top: 18px; }
+.asc-ink-seals { display: flex; gap: 16px; margin-top: 12px; }
 #asc-select .asc-ink-seals button {
   display: grid;
   justify-items: center;
@@ -1571,9 +1572,9 @@
 #asc-select .asc-ink-seals button i {
   display: grid;
   place-items: center;
-  width: 62px;
-  height: 62px;
-  font-size: 24px;
+  width: 54px;
+  height: 54px;
+  font-size: 22px;
   color: #fbeee6;
   background: var(--ink-red);
   border-radius: 6px;
@@ -1587,10 +1588,10 @@
 #asc-select .asc-ink-seals button:hover i { opacity: 0.8; }
 #asc-select .asc-ink-seals button.is-on i { opacity: 1; transform: rotate(0) scale(1.08); }
 #asc-select .asc-ink-seals button.is-on span { font-weight: 700; color: var(--ink-red); }
-.asc-ink-desc { margin: 12px 0 0; padding: 10px 14px; font-size: 18px; line-height: 1.5; border-left: 4px solid var(--ink-red); background: rgba(255, 255, 255, 0.35); }
+.asc-ink-desc { margin: 10px 0 0; padding: 8px 12px; font-size: 17px; line-height: 1.5; border-left: 4px solid var(--ink-red); background: rgba(255, 255, 255, 0.35); }
 
-.asc-ink-cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 22px; margin-top: 16px; }
-.asc-ink-strokes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.asc-ink-cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 22px; margin-top: 12px; }
+.asc-ink-strokes { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
 .asc-ink-strokes li { display: grid; grid-template-columns: 40px 1fr 30px; align-items: center; gap: 10px; }
 .asc-ink-strokes span { font-size: 15px; letter-spacing: 0.08em; color: var(--ink-soft); }
 .asc-ink-strokes i {
