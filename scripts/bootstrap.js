@@ -4,17 +4,35 @@
 // reinstalling. game.ascent.reload() refetches it on the current client.
 
 const MODULE = "the-ascent";
-const BASE = "https://raw.githubusercontent.com/aidenfortihong-blip/the-ascent/main/";
+const REPO = "aidenfortihong-blip/the-ascent";
 const STYLES = ["styles/ascent.css"];
 const SCRIPTS = ["scripts/catalog.js","scripts/ascent.js"];
 
+// raw.githubusercontent caches a branch for minutes, so files are fetched by
+// the latest commit id instead. If the API is unreachable, fall back to main.
+let ref = "main";
+
+async function latestCommit() {
+  try {
+    const response = await fetch("https://api.github.com/repos/" + REPO + "/commits/main",{
+      cache:"no-store",
+      headers:{Accept:"application/vnd.github.sha"}
+    });
+    if (response.ok) return (await response.text()).trim();
+  } catch {}
+  return "main";
+}
+
 async function fetchText(path) {
-  const response = await fetch(BASE + path + "?t=" + Date.now(),{cache:"no-store"});
+  const url = "https://raw.githubusercontent.com/" + REPO + "/" + ref + "/" + path + (ref === "main" ? "?t=" + Date.now() : "");
+  const response = await fetch(url,{cache:"no-store"});
   if (!response.ok) throw new Error(path + " fetch failed: " + response.status);
   return response.text();
 }
 
 async function load() {
+  ref = await latestCommit();
+
   const [styles,scripts] = await Promise.all([
     Promise.all(STYLES.map(fetchText)),
     Promise.all(SCRIPTS.map(fetchText))
@@ -50,7 +68,7 @@ async function load() {
 async function reload() {
   try {
     await load();
-    console.info("THE ASCENT // loaded",globalThis.ASCENT?.version);
+    console.info("THE ASCENT // loaded",globalThis.ASCENT?.version,ref.slice(0,7));
     return true;
   } catch (error) {
     console.error("THE ASCENT // load failed",error);
