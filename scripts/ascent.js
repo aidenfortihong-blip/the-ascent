@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.9.1";
+  const VERSION = "0.9.2";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1175,6 +1175,9 @@
     '</svg>';
   }
 
+  // Photo props for Kevin's desk live in Forge storage under Ascent/kevin/.
+  const KEVIN_PROPS = "https://assets.forge-vtt.com/600d963af3cd821ef5bfb19a/Ascent/kevin/";
+
   function kevinStage({p,actor}) {
     const talents = C.TALENTS.filter(t => t.owner === p.key);
     const pick = Math.min(select.talent,talents.length - 1);
@@ -1182,7 +1185,7 @@
     const sys = actor.system.attributes;
     const skillKeys = [...(p.free ?? []),...p.skills];
     const rows = STAT_KEYS.map(k =>
-      '<tr class="' + (k === "int" ? "is-key" : "") + '"><td>' + k.toUpperCase() + '</td><td>' + p.abilities[k] + '</td><td>' + (k === "int" ? "CRITICAL" : "") + '</td></tr>').join("");
+      '<tr class="' + (k === "int" ? "is-key" : "") + '"><td>' + k.toUpperCase() + '</td><td>' + p.abilities[k] + '</td></tr>').join("");
     const cards = talents.map((t,i) =>
       '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="asc-dk-card' + (i === pick ? " is-on" : "") + '" data-talent="' + i + '" style="--i:' + (i - (talents.length - 1) / 2) + '">' +
         '<span class="asc-dk-card-name">' + esc(t.name) + '</span>' +
@@ -1191,39 +1194,39 @@
         '<span class="asc-dk-card-text">' + esc(t.text) + '</span>' +
       '</button>').join("");
     const tiles = [1,2,3,4,5,6,7,8].map(n => '<i class="asc-dk-tile" data-n="' + n + '">' + n + '</i>').join("");
-    return '<div class="asc-dk' + (select.kevinDrawn ? " is-drawn" : "") + '">' +
-      '<div class="asc-dk-wood" aria-hidden="true"></div>' +
-      // the blueprint
-      '<section class="asc-bp">' +
+    const deck = [0,1,2,3,4].map(() => '<img src="' + KEVIN_PROPS + 'kv-mtg-back.webp" alt="">').join("");
+    return '<div class="asc-dk' + (select.kevinDrawn ? " is-drawn" : "") + '" style="--desk:url(' + KEVIN_PROPS + 'kv-desk.webp)">' +
+      // blueprint: subtle, lying at an angle
+      '<section class="asc-bp" aria-label="Blueprint">' +
         '<div class="asc-bp-hazard" aria-hidden="true"></div>' +
-        '<header class="asc-bp-top"><span>THE ASCENT // SCHEMATIC</span><span>FLOOR ' + floor() + '</span><span>SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
-        '<div class="asc-bp-body">' +
-          kevinSchematic(skillKeys.map(k => C.SKILL[k].name)) +
-          '<div class="asc-bp-tables">' +
-            '<table class="asc-bp-bom"><thead><tr><th>REF</th><th>VALUE</th><th>NOTE</th></tr></thead><tbody>' + rows + '</tbody></table>' +
-            '<table class="asc-bp-title"><tbody>' +
-              '<tr><th>DRAWN BY</th><td>' + esc(p.name.toUpperCase()) + '</td><th>DWG NO.</th><td>0417</td></tr>' +
-              '<tr><th>TITLE</th><td>' + esc((p.role ?? "Player").toUpperCase()) + '</td><th>REV</th><td>A</td></tr>' +
-              '<tr><th>ALIAS</th><td>' + esc((p.handle || "-").toUpperCase()) + '</td><th>SHEET</th><td>1 OF 1</td></tr>' +
-              '<tr><th>RATING</th><td colspan="3">HP ' + sys.hp.max + ' &middot; AC ' + sys.ac.value + ' &middot; SPD ' + sys.movement.walk + '</td></tr>' +
-            '</tbody></table>' +
-          '</div>' +
+        '<header class="asc-bp-top"><span>DWG 0417 // ' + esc((p.role ?? "").toUpperCase()) + '</span><span>FLOOR ' + floor() + ' &middot; SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
+        kevinSchematic(skillKeys.map(k => C.SKILL[k].name)) +
+        '<div class="asc-bp-tables">' +
+          '<table class="asc-bp-bom"><tbody>' + rows + '</tbody></table>' +
+          '<table class="asc-bp-title"><tbody>' +
+            '<tr><th>DRAWN BY</th><td>' + esc(p.name.toUpperCase()) + '</td></tr>' +
+            '<tr><th>ALIAS</th><td>' + esc((p.handle || "-").toUpperCase()) + '</td></tr>' +
+            '<tr><th>RATING</th><td>HP ' + sys.hp.max + ' &middot; AC ' + sys.ac.value + ' &middot; SPD ' + sys.movement.walk + '</td></tr>' +
+            '<tr><th>REV</th><td>A &middot; SHEET 1 OF 1</td></tr>' +
+          '</tbody></table>' +
         '</div>' +
-        '<figure class="asc-bp-photo"><i class="asc-bp-tape"></i>' + artOf(actor,p.name[0]) + '<figcaption>REF. PHOTO</figcaption></figure>' +
+        '<figure class="asc-bp-photo"><i class="asc-bp-tape"></i>' + artOf(actor,p.name[0]) + '<figcaption>ref.</figcaption></figure>' +
       '</section>' +
-      // the rest of the desk
-      '<section class="asc-dk-side">' +
-        '<div class="asc-dk-plate"><b>' + esc(p.name.toUpperCase()) + '</b><span>' + esc(p.role ?? "") + ' &middot; ' + esc(p.handle ?? "") + '</span></div>' +
-        '<p class="asc-dk-blurb">' + esc(p.blurb ?? "") + '</p>' +
-        '<div class="asc-dk-hand" role="tablist" aria-label="Talents">' + cards + '</div>' +
-        '<div class="asc-dk-props" aria-hidden="true">' +
-          '<span class="asc-dk-deck d1"><i></i><i></i><i></i><i></i></span>' +
-          '<span class="asc-dk-deck d2"><i></i><i></i><i></i><i></i></span>' +
-          '<span class="asc-dk-puzzle">' + tiles + '</span>' +
-        '</div>' +
-        (lock.note ? '<p class="asc-dk-note">' + esc(lock.note) + '</p>' : '') +
-        gmTools(actor) +
-      '</section>' +
+      // props
+      '<img class="asc-dk-prop asc-dk-burr" src="' + KEVIN_PROPS + 'kv-burr.webp" alt="">' +
+      '<img class="asc-dk-prop asc-dk-ball" src="' + KEVIN_PROPS + 'kv-ball.webp" alt="">' +
+      '<span class="asc-dk-puzzle" aria-hidden="true">' + tiles + '</span>' +
+      '<span class="asc-dk-mtg" aria-hidden="true">' + deck + '</span>' +
+      '<div class="asc-dk-castle" aria-hidden="true">' +
+        '<img class="asc-dk-prop" src="' + KEVIN_PROPS + 'kv-castle.webp" alt="">' +
+        '<i class="asc-dk-puff p1"></i><i class="asc-dk-puff p2"></i><i class="asc-dk-puff p3"></i>' +
+      '</div>' +
+      // name and bio on a sticky note
+      '<div class="asc-dk-note-card"><b>' + esc(p.name) + '</b><span>' + esc(p.blurb ?? "") + '</span></div>' +
+      // Talents as a hand of cards
+      '<div class="asc-dk-hand" role="tablist" aria-label="Talents">' + cards + '</div>' +
+      (lock.note ? '<p class="asc-dk-note">' + esc(lock.note) + '</p>' : '') +
+      '<div class="asc-dk-gm">' + gmTools(actor) + '</div>' +
     '</div>';
   }
 
