@@ -1484,7 +1484,7 @@
 .asc-ink-wash.w3 { left: 38%; top: 8%; width: 12%; height: 18%; background: radial-gradient(circle, rgba(195, 50, 29, 0.25), transparent 70%); filter: blur(18px); }
 
 /* ink splash at the seam, under the name: splashes in once per pick, then stays */
-.asc-ink-splat { position: absolute; left: 33%; bottom: -4%; width: 19%; z-index: 2; pointer-events: none; mix-blend-mode: multiply; fill: var(--ink-black); }
+.asc-ink-splat { position: absolute; left: 30%; bottom: -16%; width: 17%; z-index: 2; pointer-events: none; mix-blend-mode: multiply; fill: var(--ink-black); }
 .asc-ink-splat .s1 { opacity: 0.88; }
 .asc-ink-splat .s2 { fill: none; stroke: var(--ink-black); stroke-width: 7; stroke-linecap: round; }
 .asc-ink-splat .s8 { fill: var(--ink-red); opacity: 0.9; }
@@ -1520,7 +1520,7 @@
   writing-mode: vertical-rl;
   text-orientation: upright;
   font-family: var(--ink-brush) !important;
-  font-size: clamp(64px, 7vw, 108px);
+  font-size: clamp(54px, 6vw, 92px);
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.04em;
