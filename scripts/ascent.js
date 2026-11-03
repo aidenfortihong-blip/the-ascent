@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.8.2";
+  const VERSION = "0.9.1";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1148,72 +1148,117 @@
     },34);
   }
 
-  // KEVIN: the strategist. Night sky, a slowly turning gold trigram circle
-  // behind him, a paper scroll with a red seal, Talents as stratagem tablets.
-  const TRIGRAMS = ["111","110","101","100","011","010","001","000"];
-
-  function trigramRing() {
-    // Eight trigrams around a circle: each is three bars, broken (0) or solid (1).
-    const marks = TRIGRAMS.map((code,i) => {
-      const bars = [...code].map((bit,j) => {
-        const y = -78 + j * 6;
-        return bit === "1"
-          ? '<rect x="-10" y="' + y + '" width="20" height="3.2"/>'
-          : '<rect x="-10" y="' + y + '" width="8.5" height="3.2"/><rect x="1.5" y="' + y + '" width="8.5" height="3.2"/>';
-      }).join("");
-      return '<g transform="rotate(' + (i * 45) + ')">' + bars + '</g>';
+  // KEVIN: his desk from above. A blueprint of his build (skills wired into
+  // him, stats, title block), his Talents as a hand of cards, two decks and a
+  // wooden sliding puzzle that keeps working itself.
+  function kevinSchematic(labels) {
+    const ys = [70,190,310];
+    const parts = labels.map((label,i) => {
+      const y = ys[i];
+      return '<g class="asc-bp-part"><rect x="20" y="' + (y - 26) + '" width="150" height="52" rx="2"/>' +
+        '<text x="30" y="' + (y - 8) + '" class="asc-bp-ref">M' + (i + 1) + '</text>' +
+        '<text x="30" y="' + (y + 13) + '" class="asc-bp-name">' + esc(label.toUpperCase()) + '</text>' +
+        '<line x1="170" y1="' + y + '" x2="186" y2="' + y + '"/></g>';
     }).join("");
-    const ticks = Array.from({length:64},(x,i) =>
-      '<line x1="0" y1="-96" x2="0" y2="' + (i % 8 ? -92 : -88) + '" transform="rotate(' + (i * 5.625) + ')"/>').join("");
-    return '<svg class="asc-st-ring" viewBox="-100 -100 200 200" aria-hidden="true">' +
-      '<circle r="97"/><circle r="86"/><circle r="56"/><circle r="22"/>' +
-      '<g class="asc-st-ticks">' + ticks + '</g><g class="asc-st-bars">' + marks + '</g>' +
+    const pins = [168,190,212];
+    const wires = ys.slice(0,labels.length).map((y,i) =>
+      '<path class="asc-bp-trace" pathLength="1" style="--d:' + (0.15 + i * 0.12) + 's" d="M186 ' + y + ' H210 l5 -7 l8 14 l8 -14 l8 14 l8 -14 l5 7 H270 V' + pins[i] + ' H330"/>' +
+      '<circle class="asc-bp-node" cx="270" cy="' + pins[i] + '" r="3" style="--d:' + (0.9 + i * 0.1) + 's"/>').join("");
+    return '<svg class="asc-bp-schematic" viewBox="0 0 640 380" aria-hidden="true">' +
+      parts + wires +
+      '<path class="asc-bp-trace" pathLength="1" style="--d:.55s" d="M330 130 H450 V250 H330 Z"/>' +
+      '<text x="346" y="160" class="asc-bp-ref">U0</text><text x="346" y="186" class="asc-bp-big">KEVIN</text><text x="346" y="206" class="asc-bp-small">ANALYST CORE</text>' +
+      '<path class="asc-bp-trace" pathLength="1" style="--d:.9s" d="M450 190 H490 M490 160 V220 L540 190 Z M540 190 H612 M600 182 l12 8 l-12 8"/>' +
+      '<text x="548" y="176" class="asc-bp-small">SQUAD BUS</text>' +
+      '<path class="asc-bp-trace" pathLength="1" style="--d:1s" d="M390 130 V92 M378 92 H402 M390 250 V300 M374 300 H406 M380 308 H400 M386 316 H394"/>' +
+      '<text x="408" y="96" class="asc-bp-small">+INT 17</text>' +
     '</svg>';
   }
 
   function kevinStage({p,actor}) {
     const talents = C.TALENTS.filter(t => t.owner === p.key);
     const pick = Math.min(select.talent,talents.length - 1);
-    const t = talents[pick];
     const lock = lockState(actor);
     const sys = actor.system.attributes;
-    const tablets = talents.map((x,i) =>
-      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '">' +
-        '<small>' + ROMAN[i + 1] + '</small><b>' + esc(x.name) + '</b></button>').join("");
-    const stats = STAT_KEYS.map(k => '<li class="' + (k === "int" ? "is-key" : "") + '"><span>' + k.toUpperCase() + '</span><b>' + p.abilities[k] + '</b></li>').join("");
-    const skills = [...(p.free ?? []),...p.skills].map(k => esc(C.SKILL[k].name)).join(" &middot; ");
-    return '<div class="asc-st">' +
-      '<div class="asc-st-sky" aria-hidden="true"></div>' +
-      '<div class="asc-st-left">' +
-        trigramRing() +
-        // A cut-out (flags cutout) stands in front of the circle; otherwise the framed portrait.
-        (actor.flags?.[MODULE]?.cutout
-          ? '<div class="asc-st-portrait is-cut"><img src="' + esc(actor.flags[MODULE].cutout) + '" alt=""></div>'
-          : '<div class="asc-st-portrait">' + artOf(actor,p.name[0]) + '</div>') +
-      '</div>' +
-      '<section class="asc-st-scroll">' +
-        '<header class="asc-st-top"><span>THE ASCENT</span><span>FLOOR ' + floor() + '</span><span>SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
-        '<div class="asc-st-title">' +
-          '<span class="asc-st-seal" aria-hidden="true">策</span>' +
-          '<div><small>THE STRATEGIST</small><h2>' + esc(p.name) + '</h2><p class="asc-st-alias">' + esc(p.handle || "") + ' &middot; ' + esc(p.role ?? "Player") + '</p></div>' +
+    const skillKeys = [...(p.free ?? []),...p.skills];
+    const rows = STAT_KEYS.map(k =>
+      '<tr class="' + (k === "int" ? "is-key" : "") + '"><td>' + k.toUpperCase() + '</td><td>' + p.abilities[k] + '</td><td>' + (k === "int" ? "CRITICAL" : "") + '</td></tr>').join("");
+    const cards = talents.map((t,i) =>
+      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="asc-dk-card' + (i === pick ? " is-on" : "") + '" data-talent="' + i + '" style="--i:' + (i - (talents.length - 1) / 2) + '">' +
+        '<span class="asc-dk-card-name">' + esc(t.name) + '</span>' +
+        '<span class="asc-dk-card-art"><i class="' + esc(t.icon ?? "fa-solid fa-star") + '"></i></span>' +
+        '<span class="asc-dk-card-type">TALENT // ' + esc(p.name.toUpperCase()) + '</span>' +
+        '<span class="asc-dk-card-text">' + esc(t.text) + '</span>' +
+      '</button>').join("");
+    const tiles = [1,2,3,4,5,6,7,8].map(n => '<i class="asc-dk-tile" data-n="' + n + '">' + n + '</i>').join("");
+    return '<div class="asc-dk' + (select.kevinDrawn ? " is-drawn" : "") + '">' +
+      '<div class="asc-dk-wood" aria-hidden="true"></div>' +
+      // the blueprint
+      '<section class="asc-bp">' +
+        '<div class="asc-bp-hazard" aria-hidden="true"></div>' +
+        '<header class="asc-bp-top"><span>THE ASCENT // SCHEMATIC</span><span>FLOOR ' + floor() + '</span><span>SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
+        '<div class="asc-bp-body">' +
+          kevinSchematic(skillKeys.map(k => C.SKILL[k].name)) +
+          '<div class="asc-bp-tables">' +
+            '<table class="asc-bp-bom"><thead><tr><th>REF</th><th>VALUE</th><th>NOTE</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+            '<table class="asc-bp-title"><tbody>' +
+              '<tr><th>DRAWN BY</th><td>' + esc(p.name.toUpperCase()) + '</td><th>DWG NO.</th><td>0417</td></tr>' +
+              '<tr><th>TITLE</th><td>' + esc((p.role ?? "Player").toUpperCase()) + '</td><th>REV</th><td>A</td></tr>' +
+              '<tr><th>ALIAS</th><td>' + esc((p.handle || "-").toUpperCase()) + '</td><th>SHEET</th><td>1 OF 1</td></tr>' +
+              '<tr><th>RATING</th><td colspan="3">HP ' + sys.hp.max + ' &middot; AC ' + sys.ac.value + ' &middot; SPD ' + sys.movement.walk + '</td></tr>' +
+            '</tbody></table>' +
+          '</div>' +
         '</div>' +
-        '<p class="asc-st-blurb">' + esc(p.blurb ?? "") + '</p>' +
-        '<small class="asc-st-label">STRATAGEMS</small>' +
-        '<div class="asc-st-tablets" role="tablist" aria-label="Talents">' + tablets + '</div>' +
-        (t ? '<p class="asc-st-desc" role="tabpanel">' + esc(t.text) + '</p>' : '') +
-        '<small class="asc-st-label">ASSESSMENT</small>' +
-        '<ul class="asc-st-stats">' + stats + '</ul>' +
-        '<p class="asc-st-meta">HP ' + sys.hp.max + ' &middot; AC ' + sys.ac.value + ' &middot; SPEED ' + sys.movement.walk + '<br>' + skills + '</p>' +
-        (lock.note ? '<p class="asc-st-note">' + esc(lock.note) + '</p>' : '') +
+        '<figure class="asc-bp-photo"><i class="asc-bp-tape"></i>' + artOf(actor,p.name[0]) + '<figcaption>REF. PHOTO</figcaption></figure>' +
+      '</section>' +
+      // the rest of the desk
+      '<section class="asc-dk-side">' +
+        '<div class="asc-dk-plate"><b>' + esc(p.name.toUpperCase()) + '</b><span>' + esc(p.role ?? "") + ' &middot; ' + esc(p.handle ?? "") + '</span></div>' +
+        '<p class="asc-dk-blurb">' + esc(p.blurb ?? "") + '</p>' +
+        '<div class="asc-dk-hand" role="tablist" aria-label="Talents">' + cards + '</div>' +
+        '<div class="asc-dk-props" aria-hidden="true">' +
+          '<span class="asc-dk-deck d1"><i></i><i></i><i></i><i></i></span>' +
+          '<span class="asc-dk-deck d2"><i></i><i></i><i></i><i></i></span>' +
+          '<span class="asc-dk-puzzle">' + tiles + '</span>' +
+        '</div>' +
+        (lock.note ? '<p class="asc-dk-note">' + esc(lock.note) + '</p>' : '') +
         gmTools(actor) +
       '</section>' +
     '</div>';
   }
 
+  // Puzzle: tiles sit on a 3x3 grid with one gap; every so often a tile next
+  // to the gap slides into it. Traces draw once per pick.
+  function kevinAfter(root) {
+    if (!select.kevinDrawn) setTimeout(() => { select.kevinDrawn = true; },1600);
+    const puzzle = root.querySelector(".asc-dk-puzzle");
+    if (!puzzle) return;
+    select.puzzle ??= [1,2,3,4,5,6,7,8,0];
+    const place = () => select.puzzle.forEach((n,cell) => {
+      if (!n) return;
+      const tile = puzzle.querySelector('[data-n="' + n + '"]');
+      tile.style.transform = "translate(" + (cell % 3) * 100 + "%," + Math.floor(cell / 3) * 100 + "%)";
+    });
+    place();
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    clearInterval(select.puzzleTimer);
+    let last = -1;
+    select.puzzleTimer = setInterval(() => {
+      if (!puzzle.isConnected) return clearInterval(select.puzzleTimer);
+      const gap = select.puzzle.indexOf(0);
+      const near = [gap - 3,gap + 3,gap % 3 ? gap - 1 : -1,gap % 3 < 2 ? gap + 1 : -1].filter(c => c >= 0 && c < 9 && c !== last);
+      const from = near[Math.floor(Math.random() * near.length)];
+      select.puzzle[gap] = select.puzzle[from];
+      select.puzzle[from] = 0;
+      last = gap;
+      place();
+    },1100);
+  }
+
   const STAGES = {
     andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"},
     cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."},
-    kevin:{render:kevinStage,lock:"ENACT THE PLAN",flash:() => "ALL ACCORDING TO PLAN."}
+    kevin:{render:kevinStage,after:kevinAfter,lock:"SIGN OFF",flash:() => "APPROVED // REV A"}
   };
 
   function infoPanel({p,actor}) {
@@ -1301,6 +1346,7 @@
     select.talent = 0;
     // Cara's sprite resolves once per pick, not on every Talent click.
     select.caraResolved = false;
+    select.kevinDrawn = false;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
     await playTheme(list[index].actor);
@@ -1387,6 +1433,7 @@
     const mine = list.findIndex(x => x.actor.id === game.user.character?.id);
     select.index = mine >= 0 ? mine : 0;
     select.caraResolved = false;
+    select.kevinDrawn = false;
     renderSelect();
     select.el.querySelector(".asc-v-card.is-active .asc-v-hit")?.focus();
     preloadThemes();
