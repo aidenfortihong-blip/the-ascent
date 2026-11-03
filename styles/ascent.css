@@ -1483,18 +1483,17 @@
 .asc-ink-wash.w2 { left: 26%; bottom: -24%; width: 40%; height: 50%; background: radial-gradient(circle, rgba(26, 31, 44, 0.28), transparent 70%); }
 .asc-ink-wash.w3 { left: 38%; top: 8%; width: 12%; height: 18%; background: radial-gradient(circle, rgba(195, 50, 29, 0.25), transparent 70%); filter: blur(18px); }
 
-/* splatter, once per pick */
-.asc-ink-splat { position: absolute; left: 24%; top: 4%; width: 34%; z-index: 2; pointer-events: none; fill: var(--ink-black); }
-.asc-ink-splat * { transform-box: fill-box; transform-origin: center; animation: asc-ink-splat 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
-.asc-ink-splat .s1 { opacity: 0.85; }
-.asc-ink-splat .s2 { fill: var(--ink-red); animation-delay: 0.08s; }
-.asc-ink-splat .s3 { animation-delay: 0.12s; }
-.asc-ink-splat .s4 { animation-delay: 0.16s; }
-.asc-ink-splat .s5, .asc-ink-splat .s6 { animation-delay: 0.2s; }
-.asc-ink-splat .s7 { fill: none; stroke: var(--ink-black); stroke-width: 6; stroke-linecap: round; animation-delay: 0.1s; }
-.asc-ink-splat { animation: asc-ink-fade 1.6s ease-in 0.6s forwards; }
+/* ink splash at the seam, under the name: splashes in once per pick, then stays */
+.asc-ink-splat { position: absolute; left: 33%; bottom: -4%; width: 19%; z-index: 2; pointer-events: none; mix-blend-mode: multiply; fill: var(--ink-black); }
+.asc-ink-splat .s1 { opacity: 0.88; }
+.asc-ink-splat .s2 { fill: none; stroke: var(--ink-black); stroke-width: 7; stroke-linecap: round; }
+.asc-ink-splat .s8 { fill: var(--ink-red); opacity: 0.9; }
+.asc-ink-splat path, .asc-ink-splat circle { transform-box: fill-box; transform-origin: center; animation: asc-ink-splat 0.45s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+.asc-ink-splat .s3, .asc-ink-splat .s8 { animation-delay: 0.08s; }
+.asc-ink-splat .s4, .asc-ink-splat .s5 { animation-delay: 0.14s; }
+.asc-ink-splat .s6, .asc-ink-splat .s7 { animation-delay: 0.2s; }
+.asc-ink-splat.is-set * { animation: none; }
 @keyframes asc-ink-splat { from { transform: scale(0); } }
-@keyframes asc-ink-fade { to { opacity: 0; } }
 
 /* portrait painted into the paper */
 .asc-ink-portrait {
@@ -1664,6 +1663,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .asc-ink-splat, .asc-ink-splat * { animation: none; opacity: 0; }
+  .asc-ink-splat * { animation: none; }
   #asc-select[data-stage="aiden"] .asc-sel-flash span { animation: none; }
 }

@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.13.0";
+  const VERSION = "0.13.1";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1253,12 +1253,16 @@
         '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '" aria-hidden="true"></i><span>' + esc(x.name) + '</span></button>').join("");
     const known = [...(p.free ?? []),...p.skills].map(k =>
       '<li><i aria-hidden="true"></i>' + esc(C.SKILL[k].name) + ' <em>' + ROMAN[skills[k]?.rank ?? 1] + '</em></li>').join("");
-    const splat = select.aidenInked ? "" :
-      '<svg class="asc-ink-splat" viewBox="0 0 400 300" aria-hidden="true">' +
-        '<path class="s1" d="M120 140c30-40 90-50 120-20s20 70-20 90-80 30-110 0-20-40 10-70z"/>' +
-        '<circle class="s2" cx="260" cy="90" r="14"/><circle class="s3" cx="300" cy="200" r="9"/><circle class="s4" cx="80" cy="230" r="11"/>' +
-        '<circle class="s5" cx="330" cy="130" r="5"/><circle class="s6" cx="60" cy="110" r="6"/>' +
-        '<path class="s7" d="M240 210c20 10 40 30 70 34" /></svg>';
+    // Ink splash at the seam under his name: roughened by a noise filter, it
+    // splashes in once per pick and then stays as part of the page.
+    const splat = '<svg class="asc-ink-splat' + (select.aidenInked ? ' is-set' : '') + '" viewBox="0 0 300 400" aria-hidden="true">' +
+      '<defs><filter id="asc-ink-rough" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="4"/><feDisplacementMap in="SourceGraphic" scale="26"/></filter></defs>' +
+      '<g filter="url(#asc-ink-rough)">' +
+        '<path class="s1" d="M90 250c20-50 90-60 120-30s30 90-10 110-90 20-110-10-15-40 0-70z"/>' +
+        '<path class="s2" d="M150 120c8 40 4 90-10 130" />' +
+        '<circle class="s3" cx="230" cy="170" r="14"/><circle class="s4" cx="60" cy="200" r="9"/><circle class="s5" cx="250" cy="330" r="11"/>' +
+        '<circle class="s6" cx="200" cy="90" r="6"/><circle class="s7" cx="40" cy="330" r="7"/><circle class="s8" cx="175" cy="215" r="18"/>' +
+      '</g></svg>';
     return '<div class="asc-ink">' +
       '<div class="asc-ink-paper" aria-hidden="true"></div>' +
       '<div class="asc-ink-wash w1" aria-hidden="true"></div><div class="asc-ink-wash w2" aria-hidden="true"></div><div class="asc-ink-wash w3" aria-hidden="true"></div>' +
