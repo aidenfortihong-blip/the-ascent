@@ -1339,7 +1339,7 @@
   z-index: 2;
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 26px 16px 4px;
+  padding: 18px 26px 16px 28px;
   font-family: var(--kv-type);
   scrollbar-width: thin;
   scrollbar-color: rgba(233, 226, 212, 0.25) transparent;
