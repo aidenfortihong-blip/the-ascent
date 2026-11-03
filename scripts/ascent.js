@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.10.0";
+  const VERSION = "0.10.1";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1153,6 +1153,39 @@
   // as personal skills.
   const RANK_LETTER = ["","E","D","C","B","A"];
 
+  // Evan's map sprite: original 16x16 pixel art, two idle frames (cape flutter).
+  const EVAN_SPRITE = [
+    "......KKKK......",
+    ".....KHHHHK.....",
+    "....KHHHHHHK....",
+    "....KGGGGGGK....",
+    "....KHSSSSHK....",
+    "....KSKSSKSK....",
+    ".....KSSSSK.....",
+    "....KCBBBBCK....",
+    "...KCBBWWBBCK...",
+    "...KCBBBBBBCKs..",
+    "..KCCBGGGGBCCKs.",
+    "..KCCBBBBBBCCKs.",
+    "..KCCKBBBBKCCKG.",
+    "...KCKbbbbKCK...",
+    "....KRRKKRRK....",
+    "....KKK..KKK...."
+  ];
+  const EVAN_FLUTTER = {13:"..KCCKbbbbKCCK.."};
+  const SPRITE_COLORS = {K:"#141a2e",H:"#3266e0",G:"#f2c94c",S:"#f7cfa6",C:"#1f3f9a",B:"#3a78e0",W:"#eef3fb",b:"#22408f",R:"#6a4423",s:"#d8e0ee"};
+
+  function spriteFrame(rows,cls) {
+    const rects = rows.flatMap((row,y) => [...row].map((ch,x) =>
+      SPRITE_COLORS[ch] ? '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + SPRITE_COLORS[ch] + '"/>' : "")).join("");
+    return '<svg class="' + cls + '" viewBox="0 0 16 16" shape-rendering="crispEdges">' + rects + '</svg>';
+  }
+
+  function evanSprite() {
+    const flutter = EVAN_SPRITE.map((row,y) => EVAN_FLUTTER[y] ?? row);
+    return '<span class="asc-fe-unit">' + spriteFrame(EVAN_SPRITE,"f1") + spriteFrame(flutter,"f2") + '</span>';
+  }
+
   function evanStage({p,actor}) {
     const talents = C.TALENTS.filter(t => t.owner === p.key);
     const pick = Math.min(select.talent,talents.length - 1);
@@ -1179,7 +1212,7 @@
     }
     const embers = Array.from({length:9},(v,i) => '<i style="--e:' + i + '"></i>').join("");
     return '<div class="asc-fe">' +
-      '<div class="asc-fe-map" aria-hidden="true"><div class="asc-fe-range">' + tiles.join("") + '<b></b></div></div>' +
+      '<div class="asc-fe-map" aria-hidden="true"><div class="asc-fe-range">' + tiles.join("") + '<b></b>' + evanSprite() + '</div></div>' +
       '<div class="asc-fe-embers" aria-hidden="true">' + embers + '</div>' +
       '<section class="asc-fe-left">' +
         '<div class="asc-fe-portrait">' + artOf(actor,p.name[0]) + '</div>' +

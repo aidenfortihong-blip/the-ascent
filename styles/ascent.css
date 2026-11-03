@@ -1481,3 +1481,19 @@
 @media (prefers-reduced-motion: reduce) {
   .asc-fe-range i, .asc-fe-embers i { animation: none; }
 }
+
+/* Evan's pixel sprite on the center tile: two frames swap for the cape, a one-pixel bob */
+.asc-fe-unit {
+  position: absolute;
+  left: -32px;
+  top: -46px;
+  width: 64px;
+  height: 64px;
+  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35));
+  animation: asc-fe-bob 1s steps(2) infinite;
+}
+.asc-fe-unit svg { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.asc-fe-unit .f2 { visibility: hidden; animation: asc-fe-frame 1s steps(1) infinite; }
+@keyframes asc-fe-bob { 50% { transform: translateY(-4px); } }
+@keyframes asc-fe-frame { 50% { visibility: visible; } }
+@media (prefers-reduced-motion: reduce) { .asc-fe-unit, .asc-fe-unit .f2 { animation: none; } }
