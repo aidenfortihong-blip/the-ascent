@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.12.1";
+  const VERSION = "0.12.2";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1183,7 +1183,6 @@
       '<div class="asc-th-map" aria-hidden="true">' +
         '<div class="asc-th-range">' + tiles.join("") + '</div>' +
         '<span class="asc-th-cursor"><i></i><i></i><i></i><i></i></span>' +
-        '<span class="asc-th-sprite" style="background-image:url(' + EVAN_ART + 'evan-sprite.png)"></span>' +
       '</div>' +
       '<section class="asc-th-win">' +
         '<header class="asc-th-bar"><span class="asc-th-crest" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span><b>' + esc(p.name) + '</b>' +

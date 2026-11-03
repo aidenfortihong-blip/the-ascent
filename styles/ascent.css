@@ -1292,18 +1292,6 @@
 .asc-th-cursor i:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
 @keyframes asc-th-cursor { 50% { transform: scale(1.12); } }
 
-.asc-th-sprite {
-  position: absolute;
-  left: calc(var(--ux) - 60px);
-  top: calc(var(--uy) + 22px - 108px);
-  width: 120px;
-  height: 108px;
-  background-size: 720px 108px;
-  background-repeat: no-repeat;
-  image-rendering: pixelated;
-  animation: asc-th-walk 1.02s steps(6) infinite;
-}
-@keyframes asc-th-walk { from { background-position: 0 0; } to { background-position: -720px 0; } }
 
 /* the status window */
 .asc-th-win {
@@ -1461,5 +1449,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .asc-th-range i, .asc-th-cursor, .asc-th-sprite, .asc-th-win { animation: none; }
+  .asc-th-range i, .asc-th-cursor, .asc-th-win { animation: none; }
 }
