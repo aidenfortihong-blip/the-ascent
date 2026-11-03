@@ -319,7 +319,7 @@
 
   // Prefabs: the five people the players pick from.
   const PREFABS = [
-    {key:"kevin",role:"Analyst",blurb:"Runs the odds before anyone moves, and the odds are usually bad. Honest to a fault, ride or die anyway.",name:"Kevin",handle:"Agent Tangerine",abilities:{str:10,dex:11,con:10,int:17,wis:13,cha:9},skills:["spear","appraisal","searching"]},
+    {key:"kevin",role:"Analyst",blurb:"Runs the odds before anyone moves, and the odds are usually bad. Honest to a fault, ride or die anyway.",name:"Kevin",handle:"Agent Tangerine",abilities:{str:10,dex:13,con:10,int:17,wis:13,cha:9},skills:["spear","appraisal","searching"]},
     {key:"andrei",role:"Wildcard",blurb:"Nobody is sure how he got a slot, including him. Math PhD, debate menace, fake evil on purpose.",name:"Andrei",handle:"MF9900",abilities:{str:14,dex:10,con:11,int:17,wis:10,cha:16},skills:["sword","performance","hiding"]},
     {key:"evan",role:"Vanguard",blurb:"The squad's fist and its heart. Mediates every fight he doesn't win outright and calls everyone doggo.",name:"Evan",handle:"Evballs",abilities:{str:14,dex:14,con:13,int:17,wis:11,cha:14},skills:["martial","shield","cooking"]},
     {key:"cara",role:"Medic",blurb:"A walking encyclopedia with humor so niche it always lands. Keeps everyone breathing and says no when it counts.",name:"Cara",handle:"Human Personson",abilities:{str:8,dex:12,con:10,int:18,wis:13,cha:11},skills:["dagger","medicine","alchemy"]},
