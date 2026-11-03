@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.2.1";
+  const VERSION = "0.2.2";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -763,6 +763,10 @@
     // Each theme starts at its hook and loops back to it, not to 0:00.
     const start = Number(actor.flags?.[MODULE]?.themeStart) || 0;
     try {
+      // Browsers keep audio locked until the first real click; the music
+      // context only exists after that.
+      await game.audio.unlock;
+      if (select.soundSrc !== src) return;
       const sound = new foundry.audio.Sound(src,{context:game.audio.music});
       await sound.load();
       if (select.soundSrc !== src) return;
