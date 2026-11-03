@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.9.3";
+  const VERSION = "0.10.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1148,9 +1148,68 @@
     },34);
   }
 
+  // EVAN: a tactical RPG unit status screen over a battle map with his
+  // movement range lit up. Stats with bars, skills as weapon ranks, Talents
+  // as personal skills.
+  const RANK_LETTER = ["","E","D","C","B","A"];
+
+  function evanStage({p,actor}) {
+    const talents = C.TALENTS.filter(t => t.owner === p.key);
+    const pick = Math.min(select.talent,talents.length - 1);
+    const t = talents[pick];
+    const lock = lockState(actor);
+    const sys = actor.system.attributes;
+    const skills = skillsOf(actor);
+    const hpPct = Math.round(100 * sys.hp.value / Math.max(1,sys.hp.max));
+    const stats = STAT_KEYS.map(k => {
+      const v = p.abilities[k];
+      return '<li><span>' + k.toUpperCase() + '</span><b>' + v + '</b><i><em style="width:' + Math.round(v / 20 * 100) + '%"></em></i></li>';
+    }).join("");
+    const ranks = [...(p.free ?? []),...p.skills].map(k =>
+      '<li><i class="' + esc(C.SKILL[k].icon) + '"></i><span>' + esc(C.SKILL[k].name) + '</span><b>' + RANK_LETTER[skills[k]?.rank ?? 1] + '</b></li>').join("");
+    const personal = talents.map((x,i) =>
+      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '" aria-label="' + esc(x.name) + '">' +
+        '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '"></i><span>' + esc(x.name) + '</span></button>').join("");
+    // A diamond of movement tiles, radius 4, around the unit.
+    const tiles = [];
+    for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) {
+      const d = Math.abs(x) + Math.abs(y);
+      if (d > 4 || d === 0) continue;
+      tiles.push('<i style="--x:' + x + ';--y:' + y + ';--d:' + d + '"></i>');
+    }
+    const embers = Array.from({length:9},(v,i) => '<i style="--e:' + i + '"></i>').join("");
+    return '<div class="asc-fe">' +
+      '<div class="asc-fe-map" aria-hidden="true"><div class="asc-fe-range">' + tiles.join("") + '<b></b></div></div>' +
+      '<div class="asc-fe-embers" aria-hidden="true">' + embers + '</div>' +
+      '<section class="asc-fe-left">' +
+        '<div class="asc-fe-portrait">' + artOf(actor,p.name[0]) + '</div>' +
+        '<div class="asc-fe-plate">' +
+          '<h2>' + esc(p.name) + '</h2>' +
+          '<p class="asc-fe-class">' + esc(p.role ?? "Player") + (p.handle ? ' <span>&middot; ' + esc(p.handle) + '</span>' : '') + '</p>' +
+          '<div class="asc-fe-lv"><span>Lv</span><b>' + levelOf(actor) + '</b><span>HP</span><b>' + sys.hp.value + '</b><small>/ ' + sys.hp.max + '</small></div>' +
+          '<i class="asc-fe-hp"><em style="width:' + hpPct + '%"></em></i>' +
+        '</div>' +
+      '</section>' +
+      '<section class="asc-fe-panel">' +
+        '<header class="asc-fe-top"><span>UNIT STATUS</span><span>FLOOR ' + floor() + ' &middot; SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
+        '<div class="asc-fe-cols">' +
+          '<div><small class="asc-fe-label">Stats</small><ul class="asc-fe-stats">' + stats + '</ul>' +
+            '<p class="asc-fe-sub"><span>AC <b>' + sys.ac.value + '</b></span><span>Move <b>' + Math.round(sys.movement.walk / 5) + '</b></span></p></div>' +
+          '<div><small class="asc-fe-label">Weapon ranks</small><ul class="asc-fe-ranks">' + ranks + '</ul></div>' +
+        '</div>' +
+        '<small class="asc-fe-label">Personal skills</small>' +
+        '<div class="asc-fe-skills" role="tablist" aria-label="Talents">' + personal + '</div>' +
+        (t ? '<p class="asc-fe-desc" role="tabpanel">' + esc(t.text) + '</p>' : '') +
+        (lock.note ? '<p class="asc-fe-note">' + esc(lock.note) + '</p>' : '') +
+        gmTools(actor) +
+      '</section>' +
+    '</div>';
+  }
+
   const STAGES = {
     andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"},
-    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."}
+    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."},
+    evan:{render:evanStage,lock:"DEPLOY",flash:() => "EVAN JOINED THE ARMY"}
   };
 
   function infoPanel({p,actor}) {
