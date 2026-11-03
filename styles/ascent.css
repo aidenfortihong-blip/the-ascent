@@ -532,6 +532,14 @@
 }
 .asc-v-hero img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; border: 0; }
 .asc-v-hero.is-blank { display: grid; place-items: center; }
+/* a cut-out needs no fade at the sides: it stands in the frame, fading only at the feet */
+.asc-v-hero.is-cut {
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 70%, transparent 96%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 70%, transparent 96%);
+  max-width: 44vw;
+  background: radial-gradient(closest-side at 50% 42%, rgba(255, 70, 85, 0.22), transparent 80%);
+}
+.asc-v-hero.is-cut img { object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 0 28px rgba(0, 0, 0, 0.6)); }
 .asc-v-letter { font-family: var(--v-display); font-weight: 700; color: rgba(236, 232, 225, 0.12); font-size: 1em; }
 .asc-v-hero .asc-v-letter { font-size: 360px; }
 @keyframes asc-v-in { from { opacity: 0; transform: translate(-46%, -52%); } to { opacity: 1; transform: translate(-50%, -52%); } }
