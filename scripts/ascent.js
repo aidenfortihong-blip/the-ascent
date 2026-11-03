@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.1.0";
+  const VERSION = "0.2.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -725,12 +725,280 @@
     return new SkillPicker(actor).render({force:true});
   }
 
+  // ---------- character select ----------
+  // Full-screen pick screen. Players without a character see it when they
+  // join; clicking a prefab plays its theme, LOCK IN asks the GM to assign it.
+  // The GM sets each prefab's portrait and theme from the same screen.
+
+  const QUERY = MODULE + ".select";
+  const SQUAD_SIZE = 4;
+  const STAT_KEYS = ["str","dex","con","int","wis","cha"];
+  const DEFAULT_IMG = /mystery-man|icons\/svg\//;
+
+  const prefabs = () => C.PREFABS
+    .map(p => ({p,actor:game.actors.find(a => a.flags?.[MODULE]?.prefab === p.key)}))
+    .filter(x => x.actor);
+  const pickedBy = actor => game.users.find(u => !u.isGM && u.character?.id === actor.id);
+  const squadCount = () => prefabs().filter(x => pickedBy(x.actor)).length;
+
+  const select = {el:null,index:0,sound:null,soundSrc:null,flash:null};
+
+  async function stopTheme() {
+    const sound = select.sound;
+    select.sound = null;
+    select.soundSrc = null;
+    if (!sound) return;
+    try {
+      await sound.fade?.(0,{duration:500});
+      setTimeout(() => sound.stop?.(),520);
+    } catch { sound.stop?.(); }
+  }
+
+  async function playTheme(actor) {
+    const src = actor.flags?.[MODULE]?.theme;
+    if (src === select.soundSrc) return;
+    await stopTheme();
+    if (!src) return;
+    select.soundSrc = src;
+    try {
+      const sound = await foundry.audio.AudioHelper.play({src,volume:0.8,loop:true,channel:"music"},false);
+      if (select.soundSrc === src) select.sound = sound;
+      else sound?.stop?.();
+    } catch (error) {
+      console.warn("THE ASCENT // theme failed",src,error);
+    }
+  }
+
+  function selectCard({p,actor},i) {
+    const by = pickedBy(actor);
+    const mine = by?.isSelf;
+    const art = DEFAULT_IMG.test(actor.img)
+      ? '<div class="asc-sel-art is-blank"><span>' + esc(p.name[0]) + '</span></div>'
+      : '<div class="asc-sel-art"><img src="' + esc(actor.img) + '" alt=""></div>';
+    return '<button type="button" class="asc-sel-card' + (i === select.index ? " is-active" : "") + (by ? " is-taken" : "") + (mine ? " is-mine" : "") +
+      '" data-sel-index="' + i + '" aria-pressed="' + (i === select.index) + '" aria-label="' + esc(p.name) + (by ? ", picked by " + esc(by.name) : "") + '">' +
+      art +
+      '<span class="asc-sel-name"><b>' + esc(p.name) + '</b>' + (p.handle ? '<small>' + esc(p.handle) + '</small>' : '') + '</span>' +
+      (by ? '<span class="asc-sel-tag">' + (mine ? "YOU" : esc(by.name)) + '</span>' : '') +
+    '</button>';
+  }
+
+  function selectDetail({p,actor}) {
+    const by = pickedBy(actor);
+    const me = game.user;
+    const gm = me.isGM;
+    const full = squadCount() >= SQUAD_SIZE;
+    const talents = C.TALENTS.filter(t => t.owner === p.key);
+    const skills = [...(p.free ?? []).map(k => [k,true]),...p.skills.map(k => [k,false])];
+    const stats = STAT_KEYS.map(k => {
+      const v = p.abilities[k];
+      return '<li><span>' + k.toUpperCase() + '</span><i><b style="width:' + Math.round(v / 20 * 100) + '%"></b></i><em>' + v + '</em></li>';
+    }).join("");
+
+    let action = "";
+    if (gm) {
+      action =
+        '<button type="button" data-sel="art"><i class="fa-solid fa-image"></i> SET PORTRAIT</button>' +
+        '<button type="button" data-sel="theme"><i class="fa-solid fa-music"></i> ' + (actor.flags?.[MODULE]?.theme ? "CHANGE THEME" : "SET THEME") + '</button>' +
+        (by ? '<button type="button" data-sel="release"><i class="fa-solid fa-user-xmark"></i> RELEASE FROM ' + esc(by.name).toUpperCase() + '</button>' : '');
+    } else if (by) {
+      action = '<p class="asc-sel-note">' + (by.isSelf ? "This is you. See you inside." : "Picked by " + esc(by.name) + ".") + '</p>';
+    } else if (me.character) {
+      action = '<p class="asc-sel-note">You are already ' + esc(me.character.name) + '.</p>';
+    } else if (full) {
+      action = '<p class="asc-sel-note">The squad is full: the BD only takes four.</p>';
+    } else {
+      action = '<button type="button" class="asc-sel-lock" data-sel="lock">LOCK IN</button>';
+    }
+
+    const theme = actor.flags?.[MODULE]?.theme;
+    return '<section class="asc-sel-detail">' +
+      '<header><small>' + (p.handle ? esc(p.handle) : "NO HANDLE") + '</small><h2>' + esc(p.name) + '</h2>' +
+        (theme ? '<span class="asc-sel-playing"><i class="fa-solid fa-music"></i> ' + esc(decodeURIComponent(theme.split("/").pop()).replace(/\.[^.]+$/,"")) + '</span>' : '') +
+      '</header>' +
+      '<div class="asc-sel-cols">' +
+        '<div><small>STATS</small><ul class="asc-sel-stats">' + stats + '</ul>' +
+          '<p class="asc-sel-vitals"><span>HP <b>' + actor.system.attributes.hp.max + '</b></span><span>AC <b>' + actor.system.attributes.ac.value + '</b></span><span>SPEED <b>' + actor.system.attributes.movement.walk + '</b></span></p></div>' +
+        '<div><small>TALENTS</small><ul class="asc-sel-talents">' + talents.map(t => '<li><b>' + esc(t.name) + '</b> ' + esc(t.text) + '</li>').join("") + '</ul>' +
+          '<small>STARTING SKILLS</small><p class="asc-sel-skills">' + skills.map(([k,free]) =>
+            '<span class="asc-chip" data-cat="' + C.SKILL[k].cat + '">' + esc(C.SKILL[k].name) + (free ? " · FREE" : "") + '</span>').join("") + '</p></div>' +
+      '</div>' +
+      '<footer>' + action + '</footer>' +
+    '</section>';
+  }
+
+  function renderSelect() {
+    if (!select.el) return;
+    const list = prefabs();
+    if (!list.length) {
+      select.el.innerHTML = '<div class="asc-sel-empty">No prefabs yet. The GM builds them with ASCENT.buildPrefabs().</div>';
+      return;
+    }
+    select.index = Math.min(select.index,list.length - 1);
+    const scrollY = select.el.querySelector(".asc-sel-detail")?.scrollTop ?? 0;
+    select.el.innerHTML =
+      '<div class="asc-sel-bg" aria-hidden="true"></div>' +
+      '<header class="asc-sel-head">' +
+        '<div><small>BD LINK ESTABLISHED // UPPER BRACKET TRIAL</small><h1>SELECT YOUR PLAYER</h1></div>' +
+        '<span class="asc-sel-squad">SQUAD <b>' + squadCount() + ' / ' + SQUAD_SIZE + '</b></span>' +
+        '<button type="button" class="asc-sel-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' +
+      '</header>' +
+      '<div class="asc-sel-row" role="group" aria-label="Characters">' + list.map(selectCard).join("") + '</div>' +
+      selectDetail(list[select.index]) +
+      (select.flash ? '<div class="asc-sel-flash"><span>' + esc(select.flash) + '</span></div>' : '');
+    const detail = select.el.querySelector(".asc-sel-detail");
+    if (detail) detail.scrollTop = scrollY;
+  }
+
+  async function choose(index) {
+    const list = prefabs();
+    if (!list[index]) return;
+    select.index = index;
+    renderSelect();
+    select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
+    await playTheme(list[index].actor);
+  }
+
+  function pickFile(type,current,callback) {
+    const FP = foundry.applications.apps.FilePicker.implementation;
+    const fp = new FP({type,current,callback});
+    fp.render(true).then(() => { if (fp.element) fp.element.style.zIndex = 1200; });
+  }
+
+  async function onSelectClick(event) {
+    const card = event.target.closest("[data-sel-index]");
+    if (card) return choose(Number(card.dataset.selIndex));
+    const button = event.target.closest("[data-sel]");
+    if (!button || button.disabled) return;
+    const entry = prefabs()[select.index];
+    const actor = entry?.actor;
+    switch (button.dataset.sel) {
+      case "close": return closeSelect();
+      case "art":
+        return pickFile("image",actor.img,path => actor.update({img:path,"prototypeToken.texture.src":path}));
+      case "theme":
+        return pickFile("audio",actor.flags?.[MODULE]?.theme ?? "",async path => {
+          await actor.update({["flags."+MODULE+".theme"]:path});
+          select.soundSrc = null;
+          playTheme(actor);
+        });
+      case "release":
+        return selectRequest("release",{actorId:actor.id});
+      case "lock": {
+        button.disabled = true;
+        const ok = await selectRequest("claim",{actorId:actor.id,userId:game.user.id});
+        if (!ok) { button.disabled = false; return; }
+        select.flash = actor.name.toUpperCase() + " // LOCKED IN";
+        renderSelect();
+        setTimeout(() => { select.flash = null; closeSelect(); },2600);
+        return;
+      }
+    }
+  }
+
+  function onSelectKey(event) {
+    if (!select.el) return;
+    if (event.target.closest?.("input, textarea")) return;
+    const n = prefabs().length;
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      choose((select.index + (event.key === "ArrowRight" ? 1 : n - 1)) % n);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      closeSelect();
+    }
+  }
+
+  function openSelect() {
+    if (!select.el) {
+      select.el = document.createElement("div");
+      select.el.id = "asc-select";
+      select.el.setAttribute("role","dialog");
+      select.el.setAttribute("aria-modal","true");
+      select.el.setAttribute("aria-label","Character select");
+      select.el.addEventListener("click",event => {
+        onSelectClick(event).catch(error => ui.notifications.error(error.message));
+      });
+      document.body.appendChild(select.el);
+      document.addEventListener("keydown",onSelectKey,true);
+    }
+    const list = prefabs();
+    const mine = list.findIndex(x => x.actor.id === game.user.character?.id);
+    select.index = mine >= 0 ? mine : 0;
+    renderSelect();
+    select.el.querySelector(".asc-sel-card.is-active")?.focus();
+    if (list[select.index]) playTheme(list[select.index].actor);
+  }
+
+  function closeSelect() {
+    stopTheme();
+    document.removeEventListener("keydown",onSelectKey,true);
+    select.el?.remove();
+    select.el = null;
+  }
+
+  async function selectRequest(kind,payload) {
+    let result;
+    if (game.user.isGM) result = await onSelectQuery({kind,payload});
+    else {
+      const gm = game.users.activeGM;
+      if (!gm) {
+        ui.notifications.warn("The GM has to be online to lock in a character.");
+        return false;
+      }
+      result = await gm.query(QUERY,{kind,payload},{timeout:15000});
+    }
+    if (!result?.ok) ui.notifications.warn(result?.error ?? "That didn't go through.");
+    return !!result?.ok;
+  }
+
+  // Runs on the active GM: the only client allowed to hand out characters.
+  async function onSelectQuery(message) {
+    if (!game.user.isGM) return {ok:false,error:"Not the GM."};
+    const {kind,payload = {}} = message ?? {};
+    const actor = game.actors.get(payload.actorId);
+    if (!actor?.flags?.[MODULE]?.prefab) return {ok:false,error:"That character doesn't exist."};
+
+    if (kind === "claim") {
+      const user = game.users.get(payload.userId);
+      if (!user || user.isGM) return {ok:false,error:"Unknown player."};
+      if (user.character) return {ok:false,error:"You are already " + user.character.name + "."};
+      const by = pickedBy(actor);
+      if (by) return {ok:false,error:actor.name + " was just picked by " + by.name + "."};
+      if (squadCount() >= SQUAD_SIZE) return {ok:false,error:"The squad is full."};
+      await actor.update({["ownership." + user.id]:CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER});
+      await user.update({character:actor.id});
+      ChatMessage.create({content:'<div class="asc-chat"><small>CHARACTER SELECT</small><p><b>' + esc(user.name) + '</b> locked in as <b>' + esc(actor.name) + '</b>.</p></div>'});
+      return {ok:true};
+    }
+
+    if (kind === "release") {
+      const by = pickedBy(actor);
+      if (by) {
+        await by.update({character:null});
+        await actor.update({["ownership." + by.id]:CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE});
+      }
+      return {ok:true};
+    }
+    return {ok:false,error:"Not allowed."};
+  }
+
+  function addSelectButton(app,html) {
+    if (!game.user.isGM && game.user.character) return;
+    const root = html instanceof HTMLElement ? html : app.element;
+    const header = root?.querySelector?.(".directory-header .header-actions") ?? root?.querySelector?.(".directory-header");
+    if (!header || header.querySelector(".asc-open-select")) return;
+    header.insertAdjacentHTML("beforeend",'<button type="button" class="asc-open-select"><i class="fa-solid fa-users"></i> Character Select</button>');
+    header.querySelector(".asc-open-select").addEventListener("click",() => openSelect());
+  }
+
   // ---------- lifecycle ----------
 
   function refresh() {
     for (const app of foundry.applications.instances.values()) {
       if (app instanceof SkillPicker || (app.document?.documentName === "Actor" && app.rendered)) app.render();
     }
+    renderSelect();
   }
 
   globalThis.ASCENT = {
@@ -747,9 +1015,20 @@
     syncEffect,
     buildPrefabs,
     openPicker,
+    openSelect,
+    closeSelect,
     refresh,
 
     async init() {
+      CONFIG.queries[QUERY] = onSelectQuery;
+      on("renderActorDirectory",addSelectButton);
+      on("updateUser",(user,changed) => { if ("character" in changed) renderSelect(); });
+      on("updateActor",(actor,changed) => {
+        if (actor.flags?.[MODULE]?.prefab && ("img" in changed || "flags" in changed || "ownership" in changed)) renderSelect();
+      });
+      ui.actors?.render();
+      if (!game.user.isGM && !game.user.character && prefabs().length) openSelect();
+
       on("renderActorSheetV2",(app,html) => {
         try { decorateSheet(app,html); } catch (error) { console.warn("THE ASCENT // sheet failed",error); }
       });
@@ -778,6 +1057,9 @@
 
     async destroy() {
       for (const [name,id] of hooks.splice(0)) Hooks.off(name,id);
+      if (CONFIG.queries[QUERY] === onSelectQuery) delete CONFIG.queries[QUERY];
+      closeSelect();
+      document.querySelectorAll(".asc-open-select").forEach(node => node.remove());
       for (const app of [...foundry.applications.instances.values()]) {
         if (app instanceof SkillPicker) await app.close();
       }
