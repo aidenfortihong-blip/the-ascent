@@ -493,7 +493,6 @@
 /* the frame */
 .asc-v-frame {
   position: relative;
-  z-index: 1;
   width: min(1500px, 100%);
   height: min(860px, 100%);
   display: grid;
@@ -513,8 +512,9 @@
   z-index: 2;
   left: 50%;
   top: 50%;
-  height: min(108vh, 1040px);
-  aspect-ratio: 3 / 4.2;
+  height: min(104vh, 1000px);
+  aspect-ratio: 0.7;
+  max-width: 38vw;
   transform: translate(-50%, -52%);
   pointer-events: none;
   -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 62%, transparent 92%), linear-gradient(90deg, transparent 0%, #000 18%, #000 82%, transparent 100%);
@@ -549,18 +549,22 @@
 .asc-v-trial em { font-style: normal; font-size: 10px; letter-spacing: 0.16em; color: var(--v-coral); }
 
 .asc-v-ring {
+  position: relative;
   flex: 0 0 58px;
   height: 58px;
   display: grid;
   place-items: center;
+}
+.asc-v-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
   background: conic-gradient(var(--v-coral) var(--p), rgba(236, 232, 225, 0.1) 0);
   -webkit-mask: radial-gradient(circle, transparent 23px, #000 24px);
   mask: radial-gradient(circle, transparent 23px, #000 24px);
 }
-.asc-v-ring b { font-family: var(--v-display); font-size: 17px !important; -webkit-mask: none; }
-.asc-v-trial { position: relative; }
-.asc-v-trial .asc-v-ring + * { display: none; }
+.asc-v-ring b { font-family: var(--v-display); font-size: 17px !important; }
 
 .asc-v-squad { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .asc-v-squad li { display: flex; align-items: center; gap: 12px; min-width: 0; }
