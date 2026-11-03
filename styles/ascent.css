@@ -1280,8 +1280,8 @@
   height: 48px;
   animation: asc-th-tile 1.6s ease-in-out infinite alternate;
 }
-.asc-th-range i.is-move { background: rgba(40, 110, 255, 0.5); box-shadow: inset 0 0 0 1px rgba(200, 225, 255, 0.85); }
-.asc-th-range i.is-atk { background: rgba(230, 40, 40, 0.45); box-shadow: inset 0 0 0 1px rgba(255, 200, 200, 0.85); }
+.asc-th-range i.is-move { background: rgba(30, 95, 255, 0.62); box-shadow: inset 0 0 0 1px rgba(200, 225, 255, 0.85); }
+.asc-th-range i.is-atk { background: rgba(235, 25, 25, 0.6); box-shadow: inset 0 0 0 1px rgba(255, 200, 200, 0.85); }
 @keyframes asc-th-tile { from { opacity: 0.65; } to { opacity: 1; } }
 
 .asc-th-cursor { position: absolute; left: calc(var(--ux) - 30px); top: calc(var(--uy) - 30px); width: 60px; height: 60px; animation: asc-th-cursor 0.8s steps(2) infinite; }
@@ -1350,8 +1350,8 @@
 .asc-th-medal img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 6%; border: 0; }
 .asc-th-col dl { margin: 0; display: grid; gap: 4px; }
 .asc-th-col dl > div { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dotted var(--th-line); }
-.asc-th-col dt { font-size: 15px; color: var(--th-muted); }
-.asc-th-col dd { margin: 0; font-size: 16px; text-align: right; }
+.asc-th-col dt { font-size: 15px; color: var(--th-muted); font-weight: 400; }
+.asc-th-col dd { margin: 0; font-size: 16px; text-align: right; color: var(--th-ink); }
 .asc-th-rows { margin-top: 10px !important; }
 .asc-th-mini { display: inline-block; width: 40px; height: 36px; vertical-align: middle; background-size: 240px 36px; background-position: 0 0; image-rendering: pixelated; }
 
