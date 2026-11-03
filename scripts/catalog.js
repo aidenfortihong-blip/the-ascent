@@ -302,7 +302,7 @@
   const TALENTS = [
     {key:"pattern",icon:"fa-solid fa-chess-knight",owner:"kevin",name:"Pattern Recognition",text:"Once per fight, ask the GM one question about an enemy's behavior and get a true answer."},
     {key:"calledit",icon:"fa-solid fa-lightbulb",owner:"kevin",name:"Called It",text:"Once per fight, secretly write the GM a specific prediction. If it comes true, you take an extra turn right after the current one. The GM decides, so make it a hard call."},
-    {key:"rideordie",icon:"fa-solid fa-handshake-angle",owner:"kevin",name:"Ride or Die",text:"Take the Help action as a bonus action on an ally within 30 ft."},
+    {key:"rideordie",icon:"fa-solid fa-handshake-angle",owner:"kevin",name:"Stuck Playing Support",text:"Take the Help action as a bonus action on an ally within 30 ft."},
     {key:"debater",icon:"fa-solid fa-comments",owner:"andrei",name:"Dubious Debater",text:"Advantage on arguments, negotiations and haggling."},
     {key:"yourmom",icon:"fa-solid fa-face-grin-squint-tears",owner:"andrei",name:"Your Mom",text:"Bonus action: insult an enemy so its next attack has disadvantage. You have to actually say the joke."},
     {key:"mcevilson",icon:"fa-solid fa-mask",owner:"andrei",name:"Evil McEvilson",text:"Advantage on Intimidation against creatures with lower Intelligence than you."},
