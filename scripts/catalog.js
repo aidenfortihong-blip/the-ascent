@@ -314,7 +314,7 @@
     {key:"hotswap",icon:"fa-solid fa-repeat",owner:"cara",name:"Hot Swap",text:"Once per long rest, use any unlocked skill you do not have slotted as if it were rank V, for one use: one check, one Technique or one perk."},
     {key:"rt107",icon:"fa-solid fa-bolt",owner:"aiden",name:".107",text:"Always first in initiative."},
     {key:"clipthat",icon:"fa-solid fa-video",owner:"aiden",name:"Clip That",text:"Once per fight, declare an attack a critical hit before rolling."},
-    {key:"selftaught",icon:"fa-solid fa-graduation-cap",owner:"aiden",name:"Self-Taught",text:"Skills need about half the ticks to rank up. Once per floor, after watching someone use a skill well, gain a tick in it."}
+    {key:"selftaught",icon:"fa-solid fa-graduation-cap",owner:"aiden",name:"Self-Taught",text:"Skills need about half the ticks to rank up."}
   ];
 
   // Prefabs: the five people the players pick from.
