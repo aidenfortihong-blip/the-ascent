@@ -1,5 +1,5 @@
 /* THE ASCENT // game-menu look: dark glass panels, cool white text, one accent per skill category. */
-@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Oswald:wght@500;700&family=Share+Tech+Mono&family=Press+Start+2P&family=VT323&family=Silkscreen&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Oswald:wght@500;700&family=Share+Tech+Mono&family=Press+Start+2P&family=VT323&family=Silkscreen&family=Special+Elite&display=swap");
 
 :root {
   --asc-bg: rgba(9, 14, 24, 0.96);
@@ -1231,4 +1231,208 @@
 
 @media (prefers-reduced-motion: reduce) {
   .asc-ca-bg, .asc-ca-real { animation: none; }
+}
+
+/* ---------- stage: KEVIN (noir case file) ----------
+   Ink black, bone-white type, one blood red. Typewriter face for the file,
+   condensed caps for the name. Grain, smoke and a hard red cut on arrival. */
+
+#asc-select[data-stage="kevin"] {
+  --kv-bg: #070606;
+  --kv-paper: #e9e2d4;
+  --kv-muted: #9a9083;
+  --kv-red: #c8102e;
+  --kv-type: "Special Elite", "Courier New", monospace;
+  --kv-head: "Oswald", sans-serif;
+  color: var(--kv-paper);
+  background: radial-gradient(ellipse 80% 70% at 70% 45%, #1a0c0d 0%, var(--kv-bg) 70%);
+}
+
+.asc-kv {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(380px, 1fr) minmax(0, 1.05fr);
+  grid-template-areas: "file photo";
+  min-height: 0;
+  overflow: hidden;
+  border-top: 2px solid var(--kv-red);
+  border-bottom: 2px solid var(--kv-red);
+  animation: asc-kv-cut 0.45s steps(1);
+}
+
+/* the red jump cut when he is picked */
+.asc-kv::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--kv-red);
+  mix-blend-mode: multiply;
+  opacity: 0;
+  animation: asc-kv-flash 0.45s steps(1);
+}
+@keyframes asc-kv-flash { 0% { opacity: 1; } 20% { opacity: 0; } 40% { opacity: 0.85; } 60% { opacity: 0; } }
+@keyframes asc-kv-cut { 0% { transform: translateX(-14px); } 20% { transform: translateX(10px); } 40% { transform: translateX(-4px); } 60% { transform: none; } }
+
+.asc-kv-grain {
+  position: absolute;
+  inset: -50%;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: asc-kv-grain 0.6s steps(4) infinite;
+}
+@keyframes asc-kv-grain { 25% { transform: translate(-3%, 2%); } 50% { transform: translate(2%, -3%); } 75% { transform: translate(-1%, 3%); } }
+
+/* photo: right side, bleeding to the edge, smoke drifting over it */
+.asc-kv-photo {
+  grid-area: photo;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+.asc-kv-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 18%;
+  border: 0;
+  filter: grayscale(0.55) contrast(1.25) brightness(0.85);
+}
+.asc-kv-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, var(--kv-bg) 0%, transparent 30%),
+    radial-gradient(ellipse 90% 80% at 60% 40%, transparent 40%, rgba(7, 6, 6, 0.9) 100%),
+    linear-gradient(180deg, rgba(200, 16, 46, 0.12), transparent 40%);
+}
+.asc-kv-smoke {
+  position: absolute;
+  z-index: 1;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(233, 226, 212, 0.16) 0%, transparent 65%);
+  filter: blur(18px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.asc-kv-smoke.s1 { left: 40%; top: 50%; animation: asc-kv-smoke 14s ease-in-out infinite; }
+.asc-kv-smoke.s2 { left: 10%; top: 65%; animation: asc-kv-smoke 18s ease-in-out -6s infinite; }
+.asc-kv-smoke.s3 { left: 55%; top: 25%; width: 45%; animation: asc-kv-smoke 22s ease-in-out -11s infinite; }
+@keyframes asc-kv-smoke {
+  0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(-30%, -70%) scale(1.5); opacity: 0; }
+}
+
+/* the file */
+.asc-kv-file {
+  grid-area: file;
+  position: relative;
+  z-index: 2;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px 26px 16px 4px;
+  font-family: var(--kv-type);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(233, 226, 212, 0.25) transparent;
+}
+.asc-kv-top { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; letter-spacing: 0.12em; color: var(--kv-muted); }
+.asc-kv-top span:first-child { color: var(--kv-red); }
+.asc-kv-file h2 {
+  margin: 10px 0 4px;
+  font-family: var(--kv-head) !important;
+  font-size: clamp(64px, 7.5vw, 116px);
+  font-weight: 700;
+  line-height: 0.88;
+  letter-spacing: 0.02em;
+  color: var(--kv-paper);
+  border: 0;
+  text-shadow: 4px 4px 0 var(--kv-red);
+}
+
+.asc-kv-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 20px; margin: 12px 0 0; }
+.asc-kv-facts dt { font-size: 11px; letter-spacing: 0.16em; color: var(--kv-muted); }
+.asc-kv-facts dd { margin: 0; font-size: 15px; color: var(--kv-paper); }
+.asc-kv-redact { padding: 0 4px; color: transparent; background: var(--kv-paper); user-select: none; }
+
+.asc-kv-notes { margin: 14px 0 0; font-size: 15px; line-height: 1.55; max-width: 48ch; color: var(--kv-paper); }
+.asc-kv-notes > span:first-child { color: var(--kv-red); }
+
+.asc-kv-exhibits { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+#asc-select .asc-kv-exhibits button {
+  width: auto;
+  height: auto;
+  padding: 8px 14px 9px;
+  text-align: left;
+  font-family: var(--kv-type) !important;
+  color: #1a1412;
+  background: var(--kv-paper);
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 10px 100%, 0 50%);
+  padding-left: 20px;
+  transform: rotate(-1.5deg);
+  transition: transform 0.15s, background 0.15s;
+}
+#asc-select .asc-kv-exhibits button:nth-child(2) { transform: rotate(1deg); }
+#asc-select .asc-kv-exhibits button:nth-child(3) { transform: rotate(-0.5deg); }
+#asc-select .asc-kv-exhibits button:hover { transform: rotate(0) translateY(-2px); }
+#asc-select .asc-kv-exhibits button.is-on { color: #fff; background: var(--kv-red); }
+.asc-kv-exhibits small { display: block; font-size: 10px; letter-spacing: 0.18em; opacity: 0.7; color: inherit !important; }
+.asc-kv-exhibits b { font-size: 15px; font-weight: 400; }
+
+.asc-kv-analysis { margin-top: 14px; padding: 10px 14px; border-left: 3px solid var(--kv-red); background: rgba(233, 226, 212, 0.05); }
+#asc-select[data-stage="kevin"] .asc-kv-analysis small { font-family: var(--kv-type); font-size: 11px; color: var(--kv-red); }
+.asc-kv-analysis p { margin: 4px 0 0; min-height: 2.6em; font-size: 15px; line-height: 1.5; color: var(--kv-paper); }
+
+.asc-kv-profile { margin: 14px 0 0; font-size: 13px; line-height: 1.7; color: var(--kv-muted); }
+.asc-kv-profile b { font-weight: 400; color: var(--kv-red); }
+.asc-kv-note { margin: 10px 0 0; font-size: 14px; color: var(--kv-red); }
+
+#asc-select[data-stage="kevin"] .asc-v-gm { border-top-color: rgba(233, 226, 212, 0.15); }
+#asc-select[data-stage="kevin"] .asc-v-gm button,
+#asc-select[data-stage="kevin"] .asc-v-gm label { font-family: var(--kv-type); color: var(--kv-paper); background: transparent; border-color: rgba(233, 226, 212, 0.3); border-radius: 0; }
+
+/* shared roster as black-and-white mugshots */
+#asc-select[data-stage="kevin"] .asc-v-hit { background: #000 !important; border: 2px solid rgba(233, 226, 212, 0.25) !important; }
+#asc-select[data-stage="kevin"] .asc-v-card-art img { filter: grayscale(1) contrast(1.3) brightness(0.8) !important; }
+#asc-select[data-stage="kevin"] .asc-v-card.is-active .asc-v-hit { border-color: var(--kv-red) !important; }
+#asc-select[data-stage="kevin"] .asc-v-card-name b { font-family: var(--kv-type) !important; font-weight: 400; font-size: 16px; }
+#asc-select[data-stage="kevin"] .asc-v-lock {
+  font-family: var(--kv-type) !important;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: #fff !important;
+  background: var(--kv-red) !important;
+  border-color: var(--kv-red) !important;
+}
+#asc-select[data-stage="kevin"] .asc-v-lock:hover { color: var(--kv-red) !important; background: var(--kv-paper) !important; border-color: var(--kv-paper) !important; }
+#asc-select[data-stage="kevin"] .asc-v-close { border-radius: 0 !important; background: transparent !important; border-color: rgba(233, 226, 212, 0.3) !important; }
+#asc-select[data-stage="kevin"] .asc-sel-flash { background: rgba(7, 6, 6, 0.85); }
+#asc-select[data-stage="kevin"] .asc-sel-flash span {
+  padding: 6px 28px;
+  font-family: var(--kv-type);
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  color: var(--kv-red);
+  border: 6px double var(--kv-red);
+  transform: rotate(-8deg);
+}
+
+@media (max-width: 1000px) {
+  .asc-kv { grid-template-columns: 1fr; grid-template-areas: "photo" "file"; grid-template-rows: 34vh minmax(0, 1fr); }
+  .asc-kv-photo::after { background: linear-gradient(0deg, var(--kv-bg) 0%, transparent 40%); }
+  .asc-kv-file { padding: 12px 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asc-kv, .asc-kv::after, .asc-kv-grain, .asc-kv-smoke { animation: none; }
 }

@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.6.0";
+  const VERSION = "0.7.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1084,9 +1084,88 @@
     },34);
   }
 
+  // KEVIN: a noir case file. Smoke, grain, blood red; the file types itself out
+  // and his Talents are evidence exhibits.
+  function kevinStage({p,actor}) {
+    const talents = C.TALENTS.filter(t => t.owner === p.key);
+    const pick = Math.min(select.talent,talents.length - 1);
+    const t = talents[pick];
+    const lock = lockState(actor);
+    const sys = actor.system.attributes;
+    const a = p.abilities;
+    const exhibits = talents.map((x,i) =>
+      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '">' +
+        '<small>EXHIBIT ' + "ABC"[i] + '</small><b>' + esc(x.name) + '</b></button>').join("");
+    const skills = [...(p.free ?? []),...p.skills].map(k => esc(C.SKILL[k].name)).join(", ");
+    return '<div class="asc-kv">' +
+      '<div class="asc-kv-grain" aria-hidden="true"></div>' +
+      '<div class="asc-kv-photo" aria-hidden="true">' + artOf(actor,p.name[0]) +
+        '<i class="asc-kv-smoke s1"></i><i class="asc-kv-smoke s2"></i><i class="asc-kv-smoke s3"></i>' +
+      '</div>' +
+      '<section class="asc-kv-file">' +
+        '<header class="asc-kv-top"><span>CASE FILE No. 0417</span><span>FLOOR ' + floor() + '</span><span>SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
+        '<h2>' + esc(p.name.toUpperCase()) + '</h2>' +
+        '<dl class="asc-kv-facts">' +
+          '<div><dt>ALIAS</dt><dd>' + esc((p.handle || "UNKNOWN").toUpperCase()) + '</dd></div>' +
+          '<div><dt>OCCUPATION</dt><dd>' + esc((p.role ?? "Player").toUpperCase()) + '</dd></div>' +
+          '<div><dt>PRIOR RECORD</dt><dd><span class="asc-kv-redact">CLASSIFIED</span></dd></div>' +
+          '<div><dt>LAST SEEN</dt><dd>UPPER BRACKET INTAKE, <span class="asc-kv-redact">00:00</span></dd></div>' +
+        '</dl>' +
+        '<p class="asc-kv-notes"><span>NOTES:</span> <span class="asc-kv-type" data-type="' + esc(p.blurb ?? "") + '">' + esc(p.blurb ?? "") + '</span></p>' +
+        '<div class="asc-kv-exhibits" role="tablist" aria-label="Talents">' + exhibits + '</div>' +
+        (t ? '<div class="asc-kv-analysis" role="tabpanel"><small>ANALYSIS // EXHIBIT ' + "ABC"[pick] + '</small><p class="asc-kv-type" data-type="' + esc(t.text) + '">' + esc(t.text) + '</p></div>' : '') +
+        '<p class="asc-kv-profile">' +
+          'STR ' + a.str + ' &middot; DEX ' + a.dex + ' &middot; CON ' + a.con + ' &middot; INT <b>' + a.int + '</b> &middot; WIS ' + a.wis + ' &middot; CHA ' + a.cha +
+          '<br>HP ' + sys.hp.max + ' &middot; AC ' + sys.ac.value + ' &middot; SPEED ' + sys.movement.walk + ' &middot; KNOWN SKILLS: ' + skills +
+        '</p>' +
+        (lock.note ? '<p class="asc-kv-note">' + esc(lock.note) + '</p>' : '') +
+        gmTools(actor) +
+      '</section>' +
+    '</div>';
+  }
+
+  // Typewriter for every .asc-kv-type line, with a short noise clack per key.
+  function kevinAfter(root) {
+    const lines = [...root.querySelectorAll(".asc-kv-type")];
+    if (!lines.length || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const ctx = game.audio.interface;
+    const volume = Number(game.settings.get("core","globalInterfaceVolume")) || 0;
+    let noise = null;
+    if (ctx && volume > 0) {
+      noise = ctx.createBuffer(1,Math.floor(ctx.sampleRate * 0.02),ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length,3);
+    }
+    const clack = () => {
+      if (!noise) return;
+      try {
+        const src = ctx.createBufferSource();
+        const gain = ctx.createGain();
+        src.buffer = noise;
+        gain.gain.value = 0.12 * volume;
+        src.connect(gain).connect(ctx.destination);
+        src.start();
+      } catch {}
+    };
+    // Only the analysis retypes on an exhibit click; the notes type on arrival.
+    const queue = select.kevinNotesDone ? lines.filter(l => l.closest(".asc-kv-analysis")) : lines;
+    select.kevinNotesDone = true;
+    const texts = queue.map(l => { const t = l.dataset.type; l.textContent = ""; return t; });
+    let li = 0, i = 0;
+    select.typeTimer = setInterval(() => {
+      const line = queue[li];
+      if (!line || !line.isConnected) return clearInterval(select.typeTimer);
+      line.textContent = texts[li].slice(0,++i);
+      if (texts[li][i - 1]?.trim() && i % 2) clack();
+      if (i >= texts[li].length) { li += 1; i = 0; }
+      if (li >= queue.length) clearInterval(select.typeTimer);
+    },22);
+  }
+
   const STAGES = {
     andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"},
-    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."}
+    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."},
+    kevin:{render:kevinStage,after:kevinAfter,lock:"CLOSE CASE",flash:() => "CASE CLOSED."}
   };
 
   function infoPanel({p,actor}) {
@@ -1174,6 +1253,7 @@
     select.talent = 0;
     // Cara's sprite resolves once per pick, not on every Talent click.
     select.caraResolved = false;
+    select.kevinNotesDone = false;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
     await playTheme(list[index].actor);
@@ -1260,6 +1340,7 @@
     const mine = list.findIndex(x => x.actor.id === game.user.character?.id);
     select.index = mine >= 0 ? mine : 0;
     select.caraResolved = false;
+    select.kevinNotesDone = false;
     renderSelect();
     select.el.querySelector(".asc-v-card.is-active .asc-v-hit")?.focus();
     preloadThemes();
