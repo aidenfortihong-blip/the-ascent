@@ -1315,20 +1315,20 @@
 .asc-th-col h3:not(:first-child) { margin-top: 10px; }
 
 .asc-th-name { margin: 0 0 6px; padding-bottom: 2px; font-size: 18px; border-bottom: 1px solid var(--th-line); }
-.asc-th-who { display: grid; grid-template-columns: 104px 1fr; align-items: center; gap: 12px; }
-.asc-th-medal { width: 104px; height: 126px; border-radius: 50%; overflow: hidden; border: 3px solid #8b6f4e; box-shadow: 0 0 0 3px #f8f3e8, 0 0 0 5px rgba(120, 105, 80, 0.35); background: #b8a98e; }
+.asc-th-who { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 12px; }
+.asc-th-medal { width: 92px; height: 110px; border-radius: 50%; overflow: hidden; border: 3px solid #8b6f4e; box-shadow: 0 0 0 3px #f8f3e8, 0 0 0 5px rgba(120, 105, 80, 0.35); background: #b8a98e; }
 .asc-th-medal img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 6%; border: 0; }
 .asc-th-col dl { margin: 0; display: grid; gap: 4px; }
 .asc-th-col dl > div { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; border-bottom: 1px dotted var(--th-line); }
 .asc-th-col dt { font-size: 15px; color: var(--th-muted); font-weight: 400; }
 .asc-th-col dd { margin: 0; font-size: 16px; text-align: right; color: var(--th-ink); }
 .asc-th-rows { margin-top: 10px !important; }
-.asc-th-mini { display: inline-block; width: 48px; height: 43px; vertical-align: middle; background-size: 288px 43px; background-position: 0 0; image-rendering: pixelated; animation: asc-th-mini 1.02s steps(6) infinite; }
-@keyframes asc-th-mini { to { background-position: -288px 0; } }
+.asc-th-mini { display: inline-block; width: 40px; height: 36px; margin: -6px 0; vertical-align: middle; background-size: 240px 36px; background-position: 0 0; image-rendering: pixelated; animation: asc-th-mini 1.02s steps(6) infinite; }
+@keyframes asc-th-mini { to { background-position: -240px 0; } }
 
 .asc-th-lv { display: grid; grid-template-columns: auto auto auto 1fr; align-items: center; gap: 10px; margin-top: 8px; }
 .asc-th-lv span { font-size: 14px; color: var(--th-muted); }
-.asc-th-lv b { font-size: 28px; font-weight: 500; margin-right: 10px; }
+.asc-th-lv b { font-size: 24px; font-weight: 500; margin-right: 10px; }
 .asc-th-lv i { height: 7px; background: #4a4a4a; }
 .asc-th-lv em { display: block; height: 100%; background: #7fd6d0; }
 .asc-th-hp { display: flex; align-items: center; gap: 16px; margin-top: 6px; font-size: 14px; color: var(--th-muted); }
