@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.12.0";
+  const VERSION = "0.12.1";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1218,6 +1218,8 @@
             '<ul class="asc-th-levels">' + levels + '</ul>' +
           '</div>' +
         '</div>' +
+        '<footer class="asc-th-hints" aria-hidden="true"><span><kbd>X</kbd> Details</span><span><kbd>A</kbd> Deploy</span><span><kbd>B</kbd> Back</span></footer>' +
+        '<i class="asc-th-arrow l" aria-hidden="true">L</i><i class="asc-th-arrow r" aria-hidden="true">R</i>' +
       '</section>' +
     '</div>';
   }
