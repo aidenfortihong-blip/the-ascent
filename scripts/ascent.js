@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.4.0";
+  const VERSION = "0.5.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -903,8 +903,87 @@
     '</div>';
   }
 
+  // CARA: a retro pixel RPG. A typed dialogue box with a blip per letter,
+  // menu buttons with a cursor, and an HP bar.
+  function caraStage({p,actor}) {
+    const talents = C.TALENTS.filter(t => t.owner === p.key);
+    const statsTab = talents.length;
+    const pick = Math.min(select.talent,statsTab);
+    const lock = lockState(actor);
+    const sys = actor.system.attributes;
+    const hpPct = Math.round(100 * sys.hp.value / Math.max(1,sys.hp.max));
+    const menu = [...talents.map(x => x.name),"Stats"].map((name,i) =>
+      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '">' +
+        '<i class="asc-ca-cursor" aria-hidden="true"></i>' + esc(name.toUpperCase()) + '</button>').join("");
+
+    let box;
+    if (pick === statsTab) {
+      const skills = [...(p.free ?? []),...p.skills].map(k => esc(C.SKILL[k].name)).join(", ");
+      box = '<div class="asc-ca-stats">' + STAT_KEYS.map(k =>
+        '<span>' + k.toUpperCase() + ' <b>' + p.abilities[k] + '</b></span>').join("") + '</div>' +
+        '<p class="asc-ca-line">AC ' + sys.ac.value + '  SPEED ' + sys.movement.walk + '  SKILLS: ' + skills + '</p>';
+    } else {
+      const t = talents[pick];
+      const text = pick === 0 && !select.caraIntroDone
+        ? p.blurb
+        : t.name + ". " + t.text;
+      box = '<p class="asc-ca-type" data-type="' + esc(text) + '">' + esc(text) + '</p>';
+    }
+
+    return '<div class="asc-ca">' +
+      '<div class="asc-ca-bg" aria-hidden="true"></div>' +
+      '<header class="asc-ca-top">' +
+        '<span>THE ASCENT</span><span>FLOOR ' + floor() + '</span><span>PARTY ' + squadCount() + '/' + SQUAD_SIZE + '</span>' +
+      '</header>' +
+      '<div class="asc-ca-main">' +
+        '<div class="asc-ca-portrait">' + artOf(actor,p.name[0]) + '</div>' +
+        '<div class="asc-ca-side">' +
+          '<h2>' + esc(p.name.toUpperCase()) + '</h2>' +
+          '<p class="asc-ca-sub">' + esc((p.role ?? "Player").toUpperCase()) + (p.handle ? ' &middot; ' + esc(p.handle.toUpperCase()) : '') + '</p>' +
+          '<div class="asc-ca-hp"><span>LV 1</span><span>HP</span><i><b style="width:' + hpPct + '%"></b></i><span>' + sys.hp.value + ' / ' + sys.hp.max + '</span></div>' +
+          (lock.note ? '<p class="asc-ca-note">' + esc(lock.note) + '</p>' : '') +
+          gmTools(actor) +
+        '</div>' +
+      '</div>' +
+      '<div class="asc-ca-box" role="tabpanel" aria-live="polite">' + box + '</div>' +
+      '<nav class="asc-ca-menu" role="tablist" aria-label="Talents">' + menu + '</nav>' +
+    '</div>';
+  }
+
+  // Types the dialogue line out one letter at a time with a soft square-wave blip.
+  function caraAfter(root) {
+    const line = root.querySelector(".asc-ca-type");
+    if (!line) return;
+    select.caraIntroDone = true;
+    const text = line.dataset.type;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    line.textContent = "";
+    let i = 0;
+    const ctx = game.audio.interface;
+    const volume = Number(game.settings.get("core","globalInterfaceVolume")) || 0;
+    select.typeTimer = setInterval(() => {
+      if (!line.isConnected) return clearInterval(select.typeTimer);
+      line.textContent = text.slice(0,++i);
+      const ch = text[i - 1];
+      if (ctx && volume > 0 && ch && ch.trim() && i % 2) {
+        try {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "square";
+          osc.frequency.value = 520 + (ch.charCodeAt(0) % 5) * 30;
+          gain.gain.value = 0.035 * volume;
+          osc.connect(gain).connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.03);
+        } catch {}
+      }
+      if (i >= text.length) clearInterval(select.typeTimer);
+    },28);
+  }
+
   const STAGES = {
-    andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"}
+    andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"},
+    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "CARA JOINED THE PARTY."}
   };
 
   function infoPanel({p,actor}) {
@@ -955,6 +1034,7 @@
     const count = squadCount();
     const ring = Math.round(count / SQUAD_SIZE * 100);
     const stage = STAGES[current.p.key];
+    clearInterval(select.typeTimer);
     select.el.dataset.stage = stage ? current.p.key : "";
     if (stage) {
       select.el.innerHTML =
@@ -964,6 +1044,7 @@
         '</div>' +
         '<button type="button" class="asc-v-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' +
         (select.flash ? '<div class="asc-sel-flash"><span>' + esc(select.flash) + '</span></div>' : '');
+      stage.after?.(select.el);
       return;
     }
     select.el.innerHTML =
