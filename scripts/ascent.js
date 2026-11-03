@@ -903,6 +903,14 @@
     ? '<img src="' + esc(actor.img) + '" alt="">'
     : '<span class="asc-v-letter">' + esc(letter) + '</span>';
 
+  // Default-screen hero: a cut-out (no background) stands on the floor of the
+  // frame; a plain portrait gets the soft-edged fade instead.
+  function heroArt(actor,letter) {
+    const cut = actor.getFlag(MODULE,"cutout");
+    if (cut) return '<div class="asc-v-hero is-cut" aria-hidden="true"><img src="' + esc(cut) + '" alt=""></div>';
+    return '<div class="asc-v-hero' + (hasArt(actor) ? "" : " is-blank") + '" aria-hidden="true">' + artOf(actor,letter) + '</div>';
+  }
+
   // Can this user lock in this character right now?
   function lockState(actor) {
     const by = pickedBy(actor);
@@ -1360,7 +1368,7 @@
       return;
     }
     select.el.innerHTML =
-      '<div class="asc-v-hero' + (hasArt(current.actor) ? "" : " is-blank") + '" aria-hidden="true">' + artOf(current.actor,current.p.name[0]) + '</div>' +
+      heroArt(current.actor,current.p.name[0]) +
       '<div class="asc-v-frame">' +
         '<aside class="asc-v-left">' +
           '<div class="asc-v-trial">' +
