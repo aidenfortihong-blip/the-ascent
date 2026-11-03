@@ -1483,10 +1483,10 @@
 }
 
 /* Evan's pixel sprite on the center tile: two frames swap for the cape, a one-pixel bob */
+.asc-fe-namerow { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .asc-fe-unit {
-  position: absolute;
-  left: -32px;
-  top: -46px;
+  position: relative;
+  flex: 0 0 64px;
   width: 64px;
   height: 64px;
   filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.35));

@@ -1212,12 +1212,12 @@
     }
     const embers = Array.from({length:9},(v,i) => '<i style="--e:' + i + '"></i>').join("");
     return '<div class="asc-fe">' +
-      '<div class="asc-fe-map" aria-hidden="true"><div class="asc-fe-range">' + tiles.join("") + '<b></b>' + evanSprite() + '</div></div>' +
+      '<div class="asc-fe-map" aria-hidden="true"><div class="asc-fe-range">' + tiles.join("") + '<b></b></div></div>' +
       '<div class="asc-fe-embers" aria-hidden="true">' + embers + '</div>' +
       '<section class="asc-fe-left">' +
         '<div class="asc-fe-portrait">' + artOf(actor,p.name[0]) + '</div>' +
         '<div class="asc-fe-plate">' +
-          '<h2>' + esc(p.name) + '</h2>' +
+          '<div class="asc-fe-namerow"><h2>' + esc(p.name) + '</h2>' + evanSprite() + '</div>' +
           '<p class="asc-fe-class">' + esc(p.role ?? "Player") + (p.handle ? ' <span>&middot; ' + esc(p.handle) + '</span>' : '') + '</p>' +
           '<div class="asc-fe-lv"><span>Lv</span><b>' + levelOf(actor) + '</b><span>HP</span><b>' + sys.hp.value + '</b><small>/ ' + sys.hp.max + '</small></div>' +
           '<i class="asc-fe-hp"><em style="width:' + hpPct + '%"></em></i>' +
