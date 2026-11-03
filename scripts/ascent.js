@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.12.2";
+  const VERSION = "0.12.3";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1148,9 +1148,7 @@
     },34);
   }
 
-  // EVAN: his unit standing on a pixel tactics map (Kenney's CC0 sample map,
-  // 16px tiles drawn at 3x), with move and attack range on the tile grid and a
-  // cursor on him; a parchment status window opens over the right side.
+  // EVAN: a parchment unit status window filling the stage.
   const RANK_LETTER = ["","E","D","C","B","A"];
   const EVAN_ART = "https://assets.forge-vtt.com/600d963af3cd821ef5bfb19a/Ascent/evan/";
 
@@ -1162,12 +1160,6 @@
     const sys = actor.system.attributes;
     const skills = skillsOf(actor);
     const lv = levelOf(actor);
-    const tiles = [];
-    for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) {
-      const d = Math.abs(x) + Math.abs(y);
-      if (d > 4 || d === 0) continue;
-      tiles.push('<i class="' + (d === 4 ? "is-atk" : "is-move") + '" style="--x:' + x + ';--y:' + y + '"></i>');
-    }
     const stats = STAT_KEYS.map(k => {
       const v = p.abilities[k];
       return '<li><span>' + k.charAt(0).toUpperCase() + k.slice(1) + '</span><i><em style="width:' + Math.round(v / 20 * 100) + '%"></em></i><b>' + v + '</b></li>';
@@ -1179,11 +1171,7 @@
       const r = skills[k]?.rank ?? 1;
       return '<li><i class="' + esc(C.SKILL[k].icon) + '"></i><span>' + esc(C.SKILL[k].name) + '</span><em><b style="width:' + (r * 20) + '%"></b></em><strong>' + RANK_LETTER[r] + '</strong></li>';
     }).join("");
-    return '<div class="asc-th' + (select.evanShown ? " is-shown" : "") + '" style="--map:url(' + EVAN_ART + 'evan-map.png)">' +
-      '<div class="asc-th-map" aria-hidden="true">' +
-        '<div class="asc-th-range">' + tiles.join("") + '</div>' +
-        '<span class="asc-th-cursor"><i></i><i></i><i></i><i></i></span>' +
-      '</div>' +
+    return '<div class="asc-th' + (select.evanShown ? " is-shown" : "") + '">' +
       '<section class="asc-th-win">' +
         '<header class="asc-th-bar"><span class="asc-th-crest" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span><b>' + esc(p.name) + '</b>' +
           '<nav aria-hidden="true"><span>Status</span><span class="is-on">Skills</span><span>Notes</span></nav></header>' +

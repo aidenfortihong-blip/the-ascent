@@ -7,4 +7,4 @@ The installed module is only `scripts/bootstrap.js`. Every client fetches `scrip
 
 ## Credits
 
-Evan's map: "Roguelike pack" sample map by Kenney (kenney.nl), CC0. Evan's map sprite: fan-made pixel art supplied by the GM, used privately at this table.
+Evan's map sprite: fan-made pixel art supplied by the GM, used privately at this table.
