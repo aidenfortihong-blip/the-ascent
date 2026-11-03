@@ -649,6 +649,17 @@
 }
 .asc-sel-detail > footer .asc-sel-lock:hover { background: #b8ecff; }
 .asc-sel-note { margin: 0; font-size: 14px; color: var(--asc-muted); }
+.asc-sel-start { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--asc-muted); }
+.asc-sel-start input {
+  width: 64px;
+  height: 30px;
+  padding: 0 6px;
+  font-family: var(--asc-font);
+  color: var(--asc-text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--asc-line-strong);
+  border-radius: 3px;
+}
 
 .asc-sel-flash {
   position: absolute;

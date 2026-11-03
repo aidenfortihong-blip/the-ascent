@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.2.0";
+  const VERSION = "0.2.1";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -760,10 +760,15 @@
     await stopTheme();
     if (!src) return;
     select.soundSrc = src;
+    // Each theme starts at its hook and loops back to it, not to 0:00.
+    const start = Number(actor.flags?.[MODULE]?.themeStart) || 0;
     try {
-      const sound = await foundry.audio.AudioHelper.play({src,volume:0.8,loop:true,channel:"music"},false);
+      const sound = new foundry.audio.Sound(src,{context:game.audio.music});
+      await sound.load();
+      if (select.soundSrc !== src) return;
+      await sound.play({loop:true,offset:start,loopStart:start,volume:0.8,fade:600});
       if (select.soundSrc === src) select.sound = sound;
-      else sound?.stop?.();
+      else sound.stop();
     } catch (error) {
       console.warn("THE ASCENT // theme failed",src,error);
     }
@@ -800,6 +805,7 @@
       action =
         '<button type="button" data-sel="art"><i class="fa-solid fa-image"></i> SET PORTRAIT</button>' +
         '<button type="button" data-sel="theme"><i class="fa-solid fa-music"></i> ' + (actor.flags?.[MODULE]?.theme ? "CHANGE THEME" : "SET THEME") + '</button>' +
+        '<label class="asc-sel-start">START AT <input type="number" min="0" step="1" value="' + (Number(actor.flags?.[MODULE]?.themeStart) || 0) + '" data-sel-start aria-label="Theme start, seconds"> s</label>' +
         (by ? '<button type="button" data-sel="release"><i class="fa-solid fa-user-xmark"></i> RELEASE FROM ' + esc(by.name).toUpperCase() + '</button>' : '');
     } else if (by) {
       action = '<p class="asc-sel-note">' + (by.isSelf ? "This is you. See you inside." : "Picked by " + esc(by.name) + ".") + '</p>';
@@ -918,6 +924,14 @@
       select.el.setAttribute("aria-label","Character select");
       select.el.addEventListener("click",event => {
         onSelectClick(event).catch(error => ui.notifications.error(error.message));
+      });
+      select.el.addEventListener("change",async event => {
+        const input = event.target.closest("[data-sel-start]");
+        const actor = prefabs()[select.index]?.actor;
+        if (!input || !actor || !game.user.isGM) return;
+        await actor.update({["flags."+MODULE+".themeStart"]:Math.max(0,Number(input.value) || 0)});
+        select.soundSrc = null;
+        playTheme(actor);
       });
       document.body.appendChild(select.el);
       document.addEventListener("keydown",onSelectKey,true);
