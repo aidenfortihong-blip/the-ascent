@@ -485,6 +485,8 @@
   pointer-events: none;
 }
 
+#asc-select h1, #asc-select h2 { font-family: var(--asc-font); }
+
 #asc-select small {
   display: block;
   font-size: 11px;
@@ -536,8 +538,11 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  width: auto;
+  height: 100%;
   min-height: 0;
   padding: 0;
+  line-height: normal;
   overflow: hidden;
   background: #0c121c;
   border: 1px solid var(--asc-line);
