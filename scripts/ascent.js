@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.3.0";
+  const VERSION = "0.3.1";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -741,23 +741,26 @@
   const pickedBy = actor => game.users.find(u => !u.isGM && u.character?.id === actor.id);
   const squadCount = () => prefabs().filter(x => pickedBy(x.actor)).length;
 
-  const select = {el:null,index:0,talent:0,sound:null,soundSrc:null,flash:null};
+  // play: bumped by every theme request and by closing; a load that finishes
+  // under an old number never plays. live: every theme sound that started.
+  const select = {el:null,index:0,talent:0,soundSrc:null,play:0,live:new Set(),flash:null};
 
-  async function stopTheme() {
-    const sound = select.sound;
-    select.sound = null;
+  function stopTheme() {
     select.soundSrc = null;
-    if (!sound) return;
-    try {
-      await sound.fade?.(0,{duration:500});
-      setTimeout(() => sound.stop?.(),520);
-    } catch { sound.stop?.(); }
+    for (const sound of select.live) {
+      select.live.delete(sound);
+      try {
+        sound.fade(0,{duration:400}).catch(() => {});
+        setTimeout(() => sound.stop(),420);
+      } catch { try { sound.stop(); } catch {} }
+    }
   }
 
   async function playTheme(actor) {
     const src = actor.flags?.[MODULE]?.theme;
-    if (src === select.soundSrc) return;
-    await stopTheme();
+    if (src && src === select.soundSrc) return;
+    const ticket = ++select.play;
+    stopTheme();
     if (!src) return;
     select.soundSrc = src;
     // Each theme starts at its hook and loops back to it, not to 0:00.
@@ -766,13 +769,16 @@
       // Browsers keep audio locked until the first real click; the music
       // context only exists after that.
       await game.audio.unlock;
-      if (select.soundSrc !== src) return;
+      if (ticket !== select.play) return;
       const sound = new foundry.audio.Sound(src,{context:game.audio.music});
       await sound.load();
-      if (select.soundSrc !== src) return;
+      if (ticket !== select.play) return;
+      select.live.add(sound);
       await sound.play({loop:true,offset:start,loopStart:start,volume:0.8,fade:600});
-      if (select.soundSrc === src) select.sound = sound;
-      else sound.stop();
+      if (ticket !== select.play) {
+        select.live.delete(sound);
+        sound.stop();
+      }
     } catch (error) {
       console.warn("THE ASCENT // theme failed",src,error);
     }
@@ -1000,6 +1006,7 @@
   }
 
   function closeSelect() {
+    select.play++;
     stopTheme();
     document.removeEventListener("keydown",onSelectKey,true);
     select.el?.remove();
