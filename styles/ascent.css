@@ -787,6 +787,27 @@
   border-radius: 50% !important;
 }
 
+/* shown on every stage when Foundry's global mute is on */
+#asc-select .asc-v-mute {
+  position: absolute;
+  z-index: 4;
+  top: 14px;
+  left: 50%;
+  width: auto !important;
+  height: auto !important;
+  padding: 8px 16px !important;
+  transform: translateX(-50%);
+  font: 600 14px/1.2 system-ui, sans-serif !important;
+  color: #fff !important;
+  background: rgba(15, 17, 22, 0.92) !important;
+  border: 2px solid #ff4655 !important;
+  border-radius: 999px !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+#asc-select .asc-v-mute:hover { background: #ff4655 !important; }
+#asc-select .asc-v-mute i { margin-right: 6px; }
+
 .asc-sel-flash {
   position: absolute;
   inset: 0;

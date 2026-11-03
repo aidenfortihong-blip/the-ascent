@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.13.2";
+  const VERSION = "0.13.3";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1362,7 +1362,7 @@
           stage.render(current) +
           '<nav class="asc-v-roster" aria-label="Characters">' + list.map(rosterCard).join("") + '</nav>' +
         '</div>' +
-        '<button type="button" class="asc-v-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' +
+        '<button type="button" class="asc-v-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' + muteNote() +
         (select.flash ? '<div class="asc-sel-flash"><span>' + esc(select.flash) + '</span></div>' : '');
       stage.after?.(select.el);
       return;
@@ -1380,9 +1380,15 @@
         infoPanel(current) +
         '<nav class="asc-v-roster" aria-label="Characters">' + list.map(rosterCard).join("") + '</nav>' +
       '</div>' +
-      '<button type="button" class="asc-v-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' +
+      '<button type="button" class="asc-v-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' + muteNote() +
       (select.flash ? '<div class="asc-sel-flash"><span>' + esc(select.flash) + '</span></div>' : '');
   }
+
+  // Foundry's hotbar mute silences every channel, themes included. Say so on
+  // the screen, with a one-click way out, instead of playing to nobody.
+  const muteNote = () => game.audio.globalMute
+    ? '<button type="button" class="asc-v-mute" data-sel="unmute"><i class="fa-solid fa-volume-xmark" aria-hidden="true"></i> Sound is muted. Click to unmute.</button>'
+    : "";
 
   async function choose(index) {
     const list = prefabs();
@@ -1424,6 +1430,10 @@
     const actor = entry?.actor;
     switch (button.dataset.sel) {
       case "close": return closeSelect();
+      case "unmute":
+        game.audio.globalMute = false;
+        ui.hotbar?.render();
+        return renderSelect();
       case "art":
         return pickFile("image",actor.img,path => actor.update({img:path,"prototypeToken.texture.src":path}));
       case "theme":
