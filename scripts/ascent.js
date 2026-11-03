@@ -295,7 +295,9 @@
       if (!actor || item.type !== "weapon") return;
       const s = weaponSkillFor(actor,item);
       if (!s || s.rank < 2) return;
-      config.rolls?.[0]?.parts?.push(String(s.rank - 1));
+      // dnd5e fills in the roll's parts after this hook, so the list may not exist yet.
+      const roll = config.rolls?.[0];
+      if (roll) (roll.parts ??= []).push(String(s.rank - 1));
     } catch (error) {
       console.warn("THE ASCENT // attack bonus failed",error);
     }

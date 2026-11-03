@@ -88,9 +88,14 @@
 
 .asc-title { min-width: 0; flex: 1; }
 .asc-title h4, .asc-title b {
+  display: block;
   margin: 0;
+  font-family: var(--asc-font);
   font-size: 15px;
   font-weight: 700;
+  font-variant: normal;
+  text-transform: none;
+  letter-spacing: 0.02em;
   color: var(--asc-text);
   border: 0;
 }
@@ -188,7 +193,8 @@
 .asc-head dl > div { text-align: center; }
 .asc-head dt { font-size: 9px; letter-spacing: 0.14em; color: var(--asc-muted); }
 .asc-head dd { margin: 0; font-size: 18px; font-weight: 800; color: var(--asc-accent); white-space: nowrap; }
-.asc-head dd button { padding: 0 6px; font-size: 12px; vertical-align: middle; }
+.asc-head dd { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.asc-head dd button { display: inline-block; flex: 0 0 auto; padding: 0 6px; font-size: 12px; }
 
 .asc-talents, .asc-stored, .asc-combos {
   display: flex;
@@ -413,13 +419,14 @@
 .asc-pick-combos small { display: inline; margin-right: 6px; }
 
 .asc-slot-btn {
+  align-self: flex-end;
   margin: auto 10px 10px;
-  padding: 5px 10px !important;
-  color: #0b1220 !important;
-  background: var(--asc-cat) !important;
-  border-color: var(--asc-cat) !important;
+  padding: 4px 12px !important;
+  color: var(--asc-cat) !important;
+  background: color-mix(in srgb, var(--asc-cat) 10%, transparent) !important;
+  border-color: color-mix(in srgb, var(--asc-cat) 60%, transparent) !important;
 }
-.asc-slot-btn:hover { filter: brightness(1.1); }
+.asc-slot-btn:hover { color: #0b1220 !important; background: var(--asc-cat) !important; border-color: var(--asc-cat) !important; }
 
 .asc-none { color: var(--asc-muted); }
 
