@@ -1368,7 +1368,7 @@
 }
 
 /* the hand of Talent cards */
-.asc-dk-hand { position: relative; height: 252px; flex: 0 0 auto; }
+.asc-dk-hand { position: relative; height: 252px; margin-top: 34px; flex: 0 0 auto; }
 #asc-select .asc-dk-card {
   position: absolute;
   left: 50%;
