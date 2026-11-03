@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.5.0";
+  const VERSION = "0.5.1";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -903,55 +903,135 @@
     '</div>';
   }
 
-  // CARA: a retro pixel RPG. A typed dialogue box with a blip per letter,
-  // menu buttons with a cursor, and an HP bar.
+  // CARA: a pixel battle screen. Her portrait is redrawn as a low-res sprite,
+  // deadpan flavor text types out with a voice blip, commands sit at the bottom.
+  const CARA_LINES = {
+    intro:"* Cara appears.\n* She already knows how this ends.",
+    mentalmath:"* MENTAL MATH - once per short rest, she nudges an ally's roll by 2.\n* She did the math. You did not.",
+    wiki:"* WALKING WIKI - advantage on every lore and knowledge check.\n* There is a footnote for this.",
+    hotswap:"* HOT SWAP - once per long rest, even mid-fight, she swaps a slotted skill for another.\n* She can be someone else by tonight.",
+    check:"* Knows too much. Will tell you anyway."
+  };
+
   function caraStage({p,actor}) {
     const talents = C.TALENTS.filter(t => t.owner === p.key);
-    const statsTab = talents.length;
-    const pick = Math.min(select.talent,statsTab);
+    const checkTab = talents.length;
+    const pick = Math.min(select.talent,checkTab);
     const lock = lockState(actor);
     const sys = actor.system.attributes;
     const hpPct = Math.round(100 * sys.hp.value / Math.max(1,sys.hp.max));
-    const menu = [...talents.map(x => x.name),"Stats"].map((name,i) =>
+    const commands = [...talents.map(x => x.name),"Check"].map((name,i) =>
       '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '">' +
         '<i class="asc-ca-cursor" aria-hidden="true"></i>' + esc(name.toUpperCase()) + '</button>').join("");
 
-    let box;
-    if (pick === statsTab) {
-      const skills = [...(p.free ?? []),...p.skills].map(k => esc(C.SKILL[k].name)).join(", ");
-      box = '<div class="asc-ca-stats">' + STAT_KEYS.map(k =>
-        '<span>' + k.toUpperCase() + ' <b>' + p.abilities[k] + '</b></span>').join("") + '</div>' +
-        '<p class="asc-ca-line">AC ' + sys.ac.value + '  SPEED ' + sys.movement.walk + '  SKILLS: ' + skills + '</p>';
+    let line;
+    if (pick === checkTab) {
+      const a = p.abilities;
+      line = "* " + p.name.toUpperCase() + " - STR " + a.str + " DEX " + a.dex + " CON " + a.con + " INT " + a.int + " WIS " + a.wis + " CHA " + a.cha + "\n" + CARA_LINES.check;
+    } else if (pick === 0 && !select.caraIntroDone) {
+      line = CARA_LINES.intro;
     } else {
       const t = talents[pick];
-      const text = pick === 0 && !select.caraIntroDone
-        ? p.blurb
-        : t.name + ". " + t.text;
-      box = '<p class="asc-ca-type" data-type="' + esc(text) + '">' + esc(text) + '</p>';
+      line = CARA_LINES[t.key] ?? "* " + t.name.toUpperCase() + " - " + t.text;
     }
 
     return '<div class="asc-ca">' +
       '<div class="asc-ca-bg" aria-hidden="true"></div>' +
-      '<header class="asc-ca-top">' +
-        '<span>THE ASCENT</span><span>FLOOR ' + floor() + '</span><span>PARTY ' + squadCount() + '/' + SQUAD_SIZE + '</span>' +
-      '</header>' +
-      '<div class="asc-ca-main">' +
-        '<div class="asc-ca-portrait">' + artOf(actor,p.name[0]) + '</div>' +
-        '<div class="asc-ca-side">' +
-          '<h2>' + esc(p.name.toUpperCase()) + '</h2>' +
-          '<p class="asc-ca-sub">' + esc((p.role ?? "Player").toUpperCase()) + (p.handle ? ' &middot; ' + esc(p.handle.toUpperCase()) : '') + '</p>' +
-          '<div class="asc-ca-hp"><span>LV 1</span><span>HP</span><i><b style="width:' + hpPct + '%"></b></i><span>' + sys.hp.value + ' / ' + sys.hp.max + '</span></div>' +
-          (lock.note ? '<p class="asc-ca-note">' + esc(lock.note) + '</p>' : '') +
-          gmTools(actor) +
-        '</div>' +
+      '<div class="asc-ca-arena">' +
+        '<canvas class="asc-ca-sprite" width="300" height="400" role="img" aria-label="' + esc(p.name) + '" data-src="' + esc(actor.img) + '"></canvas>' +
       '</div>' +
-      '<div class="asc-ca-box" role="tabpanel" aria-live="polite">' + box + '</div>' +
-      '<nav class="asc-ca-menu" role="tablist" aria-label="Talents">' + menu + '</nav>' +
+      '<div class="asc-ca-box" role="tabpanel" aria-live="polite"><p class="asc-ca-type" data-type="' + esc(line) + '">' + esc(line) + '</p></div>' +
+      '<div class="asc-ca-hud">' +
+        '<b>' + esc(p.name.toUpperCase()) + '</b><span>LV 1</span><span class="asc-ca-hp">HP</span>' +
+        '<i><b style="width:' + hpPct + '%"></b></i><span>' + sys.hp.value + ' / ' + sys.hp.max + '</span>' +
+        '<em>' + esc((p.role ?? "").toUpperCase()) + '</em>' +
+      '</div>' +
+      '<nav class="asc-ca-menu" role="tablist" aria-label="Talents">' + commands + '</nav>' +
+      (lock.note ? '<p class="asc-ca-note">* ' + esc(lock.note) + '</p>' : '') +
+      gmTools(actor) +
     '</div>';
   }
 
-  // Types the dialogue line out one letter at a time with a soft square-wave blip.
+  function caraBlip(freq,length,level) {
+    const ctx = game.audio.interface;
+    const volume = Number(game.settings.get("core","globalInterfaceVolume")) || 0;
+    if (!ctx || volume <= 0) return;
+    try {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      osc.frequency.value = freq;
+      gain.gain.value = level * volume;
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + length);
+    } catch {}
+  }
+
+  // The portrait starts as a tiny posterized sprite, then sharpens step by
+  // step (with rising blips) until it becomes the real art.
+  function caraSprite(canvas) {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const g = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      const finish = () => {
+        if (!canvas.isConnected) return;
+        const real = document.createElement("img");
+        real.className = "asc-ca-real";
+        real.src = img.src;
+        real.alt = "";
+        canvas.replaceWith(real);
+      };
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) return finish();
+      const steps = [14,20,28,40,58,84,124,180];
+      const draw = (size,posterize) => {
+        const off = document.createElement("canvas");
+        off.width = size;
+        off.height = Math.round(size * H / W);
+        const o = off.getContext("2d");
+        const scale = Math.max(off.width / img.naturalWidth,off.height / img.naturalHeight);
+        const dw = img.naturalWidth * scale, dh = img.naturalHeight * scale;
+        o.drawImage(img,(off.width - dw) / 2,(off.height - dh) * 0.2,dw,dh);
+        if (posterize) {
+          try {
+            const data = o.getImageData(0,0,off.width,off.height);
+            const px = data.data;
+            const tones = [[0,0,0],[58,22,96],[170,140,210],[255,255,255]];
+            for (let i = 0; i < px.length; i += 4) {
+              const lum = 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+              const tone = tones[Math.max(0,Math.min(3,Math.floor(lum / 64)))];
+              px[i] = tone[0]; px[i + 1] = tone[1]; px[i + 2] = tone[2];
+            }
+            o.putImageData(data,0,0);
+          } catch {}
+        }
+        g.imageSmoothingEnabled = false;
+        g.clearRect(0,0,W,H);
+        g.drawImage(off,0,0,W,H);
+      };
+      draw(steps[0],true);
+      let n = 0;
+      // Hold on the sprite a moment, then resolve.
+      setTimeout(function next() {
+        if (!canvas.isConnected) return;
+        n += 1;
+        if (n >= steps.length) return finish();
+        draw(steps[n],n < 3);
+        caraBlip(300 + n * 70,0.05,0.04);
+        setTimeout(next,n < 3 ? 160 : 110);
+      },900);
+    };
+    img.src = canvas.dataset.src;
+  }
+
   function caraAfter(root) {
+    const sprite = root.querySelector(".asc-ca-sprite");
+    if (sprite) caraSprite(sprite);
+    for (const button of root.querySelectorAll(".asc-ca-menu button")) {
+      button.addEventListener("pointerenter",() => caraBlip(880,0.025,0.03));
+    }
     const line = root.querySelector(".asc-ca-type");
     if (!line) return;
     select.caraIntroDone = true;
@@ -959,31 +1039,18 @@
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     line.textContent = "";
     let i = 0;
-    const ctx = game.audio.interface;
-    const volume = Number(game.settings.get("core","globalInterfaceVolume")) || 0;
     select.typeTimer = setInterval(() => {
       if (!line.isConnected) return clearInterval(select.typeTimer);
       line.textContent = text.slice(0,++i);
       const ch = text[i - 1];
-      if (ctx && volume > 0 && ch && ch.trim() && i % 2) {
-        try {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = "square";
-          osc.frequency.value = 520 + (ch.charCodeAt(0) % 5) * 30;
-          gain.gain.value = 0.035 * volume;
-          osc.connect(gain).connect(ctx.destination);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.03);
-        } catch {}
-      }
+      if (ch && /[a-z0-9]/i.test(ch) && i % 2) caraBlip(220 + (ch.charCodeAt(0) % 3) * 12,0.04,0.05);
       if (i >= text.length) clearInterval(select.typeTimer);
-    },28);
+    },34);
   }
 
   const STAGES = {
     andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"},
-    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "CARA JOINED THE PARTY."}
+    cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."}
   };
 
   function infoPanel({p,actor}) {
