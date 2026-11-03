@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.5.1";
+  const VERSION = "0.5.2";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -904,14 +904,7 @@
   }
 
   // CARA: a pixel battle screen. Her portrait is redrawn as a low-res sprite,
-  // deadpan flavor text types out with a voice blip, commands sit at the bottom.
-  const CARA_LINES = {
-    intro:"* Cara appears.\n* She already knows how this ends.",
-    mentalmath:"* MENTAL MATH - once per short rest, she nudges an ally's roll by 2.\n* She did the math. You did not.",
-    wiki:"* WALKING WIKI - advantage on every lore and knowledge check.\n* There is a footnote for this.",
-    hotswap:"* HOT SWAP - once per long rest, even mid-fight, she swaps a slotted skill for another.\n* She can be someone else by tonight.",
-    check:"* Knows too much. Will tell you anyway."
-  };
+  // the selected Talent's rules type out with a voice blip, commands sit at the bottom.
 
   function caraStage({p,actor}) {
     const talents = C.TALENTS.filter(t => t.owner === p.key);
@@ -927,12 +920,12 @@
     let line;
     if (pick === checkTab) {
       const a = p.abilities;
-      line = "* " + p.name.toUpperCase() + " - STR " + a.str + " DEX " + a.dex + " CON " + a.con + " INT " + a.int + " WIS " + a.wis + " CHA " + a.cha + "\n" + CARA_LINES.check;
-    } else if (pick === 0 && !select.caraIntroDone) {
-      line = CARA_LINES.intro;
+      const skills = [...(p.free ?? []),...p.skills].map(k => C.SKILL[k].name).join(", ");
+      line = "* STR " + a.str + "  DEX " + a.dex + "  CON " + a.con + "  INT " + a.int + "  WIS " + a.wis + "  CHA " + a.cha +
+        "\n* AC " + sys.ac.value + "  SPEED " + sys.movement.walk + "  SKILLS " + skills;
     } else {
       const t = talents[pick];
-      line = CARA_LINES[t.key] ?? "* " + t.name.toUpperCase() + " - " + t.text;
+      line = "* " + t.name.toUpperCase() + "\n* " + t.text;
     }
 
     return '<div class="asc-ca">' +
@@ -1034,7 +1027,6 @@
     }
     const line = root.querySelector(".asc-ca-type");
     if (!line) return;
-    select.caraIntroDone = true;
     const text = line.dataset.type;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     line.textContent = "";
@@ -1136,7 +1128,6 @@
     if (!list[index]) return;
     select.index = index;
     select.talent = 0;
-    select.caraIntroDone = false;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
     await playTheme(list[index].actor);
