@@ -1283,7 +1283,7 @@
 @keyframes asc-st-twinkle { to { opacity: 0.35; } }
 
 /* left: the trigram circle turning behind the portrait */
-.asc-st-left { position: relative; display: grid; place-items: center; min-height: 0; overflow: hidden; }
+.asc-st-left { position: relative; display: grid; grid-template-rows: minmax(0, 1fr); place-items: center; min-height: 0; overflow: hidden; }
 .asc-st-ring {
   position: absolute;
   width: min(100%, 86vh);
