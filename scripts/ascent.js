@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.3.1";
+  const VERSION = "0.4.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -818,7 +818,7 @@
         '<span class="asc-v-card-art">' + artOf(actor,p.name[0]) + '</span>' +
         '<span class="asc-v-card-name">' + (by ? '<small>' + esc(by.isSelf ? "YOU" : by.name) + '</small>' : '') + '<b>' + esc(p.name) + '</b></span>' +
       '</button>' +
-      (lock ? '<button type="button" class="asc-v-lock" data-sel="lock">LOCK IN</button>' : '') +
+      (lock ? '<button type="button" class="asc-v-lock" data-sel="lock">' + esc(STAGES[p.key]?.lock ?? "LOCK IN") + '</button>' : '') +
     '</div>';
   }
 
@@ -838,6 +838,75 @@
     return '<ul class="asc-v-squad" aria-label="Squad">' + rows.join("") + '</ul>';
   }
 
+  function gmTools(actor) {
+    if (!game.user.isGM) return "";
+    return '<div class="asc-v-gm">' +
+      '<button type="button" data-sel="art"><i class="fa-solid fa-image"></i> Portrait</button>' +
+      '<button type="button" data-sel="theme"><i class="fa-solid fa-music"></i> Theme</button>' +
+      '<label>Start <input type="number" min="0" step="1" value="' + (Number(actor.flags?.[MODULE]?.themeStart) || 0) + '" data-sel-start aria-label="Theme start, seconds"> s</label>' +
+      (pickedBy(actor) ? '<button type="button" data-sel="release"><i class="fa-solid fa-user-xmark"></i> Release</button>' : '') +
+    '</div>';
+  }
+
+  // ---------- per-character stages ----------
+  // A character with a stage gets their own screen; the roster strip, LOCK IN
+  // and the theme song stay shared. Characters without one use the default.
+
+  // ANDREI: the one who does not belong. A robot on a cold lab diagnostics screen.
+  function andreiStage({p,actor}) {
+    const talents = C.TALENTS.filter(t => t.owner === p.key);
+    const t = talents[select.talent] ?? talents[0];
+    const lock = lockState(actor);
+    const names = {str:"STR.SYS",dex:"DEX.SYS",con:"CON.SYS",int:"INT.CORE",wis:"WIS.SYS",cha:"CHA.EMU"};
+    const bars = STAT_KEYS.map(k => {
+      const v = p.abilities[k];
+      const cells = Array.from({length:20},(x,i) => '<i class="' + (i < v ? "on" : "") + '"></i>').join("");
+      return '<li><span>' + names[k] + '</span><span class="asc-an-cells" aria-hidden="true">' + cells + '</span><b>' + String(v).padStart(2,"0") + '</b></li>';
+    }).join("");
+    const modules = [...(p.free ?? []),...p.skills].map(k => '<span>' + esc(C.SKILL[k].name.toUpperCase().replaceAll(" ","_")) + '.MOD</span>').join("");
+    const sys = actor.system.attributes;
+    return '<div class="asc-an">' +
+      '<div class="asc-an-bg" aria-hidden="true"><i class="asc-an-sweep"></i></div>' +
+      '<header class="asc-an-top">' +
+        '<span><b>THE ASCENT</b> // UNIT REGISTRY</span>' +
+        '<span>FLOOR ' + String(floor()).padStart(2,"0") + '</span>' +
+        '<span>SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span>' +
+        '<span class="asc-an-live"><i></i> LIVE FEED</span>' +
+      '</header>' +
+      '<section class="asc-an-scan" aria-hidden="true">' +
+        '<div class="asc-an-face">' + artOf(actor,p.name[0]) + '</div>' +
+        '<svg class="asc-an-rings" viewBox="0 0 200 200"><circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="80"/><circle cx="100" cy="100" r="68"/></svg>' +
+        '<i class="asc-an-corner tl"></i><i class="asc-an-corner tr"></i><i class="asc-an-corner bl"></i><i class="asc-an-corner br"></i>' +
+        '<span class="asc-an-tag t1">FACE MATCH <b>97.2%</b></span>' +
+        '<span class="asc-an-tag t2">SPECIES <b class="err">UNDEFINED</b></span>' +
+        '<span class="asc-an-tag t3">EMOTION <b>SIMULATED</b></span>' +
+      '</section>' +
+      '<section class="asc-an-data">' +
+        '<small>DESIGNATION</small>' +
+        '<h2>' + esc(p.name.toUpperCase()) + '</h2>' +
+        '<p class="asc-an-id">UNIT ' + esc(p.handle || "UNKNOWN") + ' // CLASS: ' + esc((p.role ?? "Player").toUpperCase()) + '</p>' +
+        '<p class="asc-an-log"><span>&gt; LOG:</span> ' + esc(p.blurb ?? "") + '</p>' +
+        '<div class="asc-an-warn" role="note"><i class="fa-solid fa-triangle-exclamation"></i> HUMOR MODULE: UNSTABLE <em>// mom jokes detected</em></div>' +
+        '<small>CORE ATTRIBUTES</small>' +
+        '<ul class="asc-an-bars">' + bars + '</ul>' +
+        '<p class="asc-an-vitals"><span>INTEGRITY <b>' + sys.hp.max + '</b></span><span>PLATING <b>' + sys.ac.value + '</b></span><span>MOBILITY <b>' + sys.movement.walk + '</b></span></p>' +
+        '<small>SUBROUTINES</small>' +
+        '<div class="asc-an-subs" role="tablist" aria-label="Talents">' + talents.map((x,i) =>
+          '<button type="button" role="tab" aria-selected="' + (x === t) + '" class="' + (x === t ? "is-on" : "") + '" data-talent="' + i + '">' +
+            '<span>' + esc(x.name) + '</span><em>LOADED</em></button>').join("") +
+        '</div>' +
+        (t ? '<p class="asc-an-desc" role="tabpanel">' + esc(t.text) + '</p>' : '') +
+        '<p class="asc-an-mods"><small>INSTALLED</small>' + modules + '</p>' +
+        (lock.note ? '<p class="asc-an-note">' + esc(lock.note) + '</p>' : '') +
+        gmTools(actor) +
+      '</section>' +
+    '</div>';
+  }
+
+  const STAGES = {
+    andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"}
+  };
+
   function infoPanel({p,actor}) {
     const talents = C.TALENTS.filter(t => t.owner === p.key);
     const t = talents[select.talent] ?? talents[0];
@@ -853,14 +922,7 @@
         (by ? '<i class="fa-solid fa-check"></i>' : '') + '</i>';
     }).join("");
 
-    const gm = game.user.isGM
-      ? '<div class="asc-v-gm">' +
-          '<button type="button" data-sel="art"><i class="fa-solid fa-image"></i> Portrait</button>' +
-          '<button type="button" data-sel="theme"><i class="fa-solid fa-music"></i> ' + (theme ? "Theme" : "Set theme") + '</button>' +
-          '<label>Start <input type="number" min="0" step="1" value="' + (Number(actor.flags?.[MODULE]?.themeStart) || 0) + '" data-sel-start aria-label="Theme start, seconds"> s</label>' +
-          (pickedBy(actor) ? '<button type="button" data-sel="release"><i class="fa-solid fa-user-xmark"></i> Release</button>' : '') +
-        '</div>'
-      : '';
+    const gm = gmTools(actor);
 
     return '<section class="asc-v-info">' +
       '<small class="asc-v-role">' + esc(p.role ?? "Player") + (p.handle ? ' // ' + esc(p.handle) : '') + '</small>' +
@@ -892,6 +954,18 @@
     const current = list[select.index];
     const count = squadCount();
     const ring = Math.round(count / SQUAD_SIZE * 100);
+    const stage = STAGES[current.p.key];
+    select.el.dataset.stage = stage ? current.p.key : "";
+    if (stage) {
+      select.el.innerHTML =
+        '<div class="asc-stage">' +
+          stage.render(current) +
+          '<nav class="asc-v-roster" aria-label="Characters">' + list.map(rosterCard).join("") + '</nav>' +
+        '</div>' +
+        '<button type="button" class="asc-v-close" data-sel="close" aria-label="Close character select"><i class="fa-solid fa-xmark"></i></button>' +
+        (select.flash ? '<div class="asc-sel-flash"><span>' + esc(select.flash) + '</span></div>' : '');
+      return;
+    }
     select.el.innerHTML =
       '<div class="asc-v-hero' + (hasArt(current.actor) ? "" : " is-blank") + '" aria-hidden="true">' + artOf(current.actor,current.p.name[0]) + '</div>' +
       '<div class="asc-v-frame">' +
@@ -954,7 +1028,7 @@
         button.disabled = true;
         const ok = await selectRequest("claim",{actorId:actor.id,userId:game.user.id});
         if (!ok) { button.disabled = false; return; }
-        select.flash = actor.name.toUpperCase() + " // LOCKED IN";
+        select.flash = STAGES[prefabs()[select.index]?.p.key]?.flash?.(actor) ?? actor.name.toUpperCase() + " // LOCKED IN";
         renderSelect();
         setTimeout(() => { select.flash = null; closeSelect(); },2600);
         return;
