@@ -1,5 +1,5 @@
 /* THE ASCENT // game-menu look: dark glass panels, cool white text, one accent per skill category. */
-@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Oswald:wght@500;700&family=Share+Tech+Mono&family=Press+Start+2P&family=VT323&family=Silkscreen&family=EB+Garamond:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Oswald:wght@500;700&family=Share+Tech+Mono&family=Press+Start+2P&family=VT323&family=Silkscreen&family=EB+Garamond:wght@400;500;600&family=Yuji+Syuku&family=Shippori+Mincho:wght@400;600;700&display=swap");
 
 :root {
   --asc-bg: rgba(9, 14, 24, 0.96);
@@ -1447,4 +1447,217 @@
 
 @media (prefers-reduced-motion: reduce) {
   .asc-th-win, .asc-th-mini { animation: none; }
+}
+
+/* ---------- stage: AIDEN (ink and brush) ----------
+   Rice paper, blue-black ink, one vermilion for seals. The portrait is
+   multiplied into the paper so it reads as painted on; brush type for the
+   name, a mincho serif for reading. */
+
+#asc-select[data-stage="aiden"] {
+  --ink-paper: #f1e9d8;
+  --ink-black: #1a1f2c;
+  --ink-indigo: #26365e;
+  --ink-red: #c3321d;
+  --ink-soft: #5e5648;
+  --ink-brush: "Yuji Syuku", "Shippori Mincho", serif;
+  --ink-text: "Shippori Mincho", "Georgia", serif;
+  color: var(--ink-black);
+  background: #0f1118;
+}
+
+.asc-ink { position: relative; min-height: 0; overflow: hidden; border-radius: 4px; font-family: var(--ink-text); }
+
+.asc-ink-paper {
+  position: absolute;
+  inset: 0;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.22  0 0 0 0.16 0'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>"),
+    repeating-linear-gradient(17deg, rgba(120, 100, 70, 0.04) 0 1px, transparent 1px 9px),
+    radial-gradient(ellipse 90% 80% at 55% 45%, #f6efe0, var(--ink-paper) 60%, #e4d8c0 100%);
+}
+
+/* soft ink washes */
+.asc-ink-wash { position: absolute; border-radius: 50%; filter: blur(40px); pointer-events: none; }
+.asc-ink-wash.w1 { right: -8%; top: -18%; width: 46%; height: 60%; background: radial-gradient(circle, rgba(38, 54, 94, 0.32), transparent 70%); }
+.asc-ink-wash.w2 { left: 26%; bottom: -24%; width: 40%; height: 50%; background: radial-gradient(circle, rgba(26, 31, 44, 0.28), transparent 70%); }
+.asc-ink-wash.w3 { left: 38%; top: 8%; width: 12%; height: 18%; background: radial-gradient(circle, rgba(195, 50, 29, 0.25), transparent 70%); filter: blur(18px); }
+
+/* splatter, once per pick */
+.asc-ink-splat { position: absolute; left: 24%; top: 4%; width: 34%; z-index: 2; pointer-events: none; fill: var(--ink-black); }
+.asc-ink-splat * { transform-box: fill-box; transform-origin: center; animation: asc-ink-splat 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.asc-ink-splat .s1 { opacity: 0.85; }
+.asc-ink-splat .s2 { fill: var(--ink-red); animation-delay: 0.08s; }
+.asc-ink-splat .s3 { animation-delay: 0.12s; }
+.asc-ink-splat .s4 { animation-delay: 0.16s; }
+.asc-ink-splat .s5, .asc-ink-splat .s6 { animation-delay: 0.2s; }
+.asc-ink-splat .s7 { fill: none; stroke: var(--ink-black); stroke-width: 6; stroke-linecap: round; animation-delay: 0.1s; }
+.asc-ink-splat { animation: asc-ink-fade 1.6s ease-in 0.6s forwards; }
+@keyframes asc-ink-splat { from { transform: scale(0); } }
+@keyframes asc-ink-fade { to { opacity: 0; } }
+
+/* portrait painted into the paper */
+.asc-ink-portrait {
+  position: absolute;
+  left: 1%;
+  top: 0;
+  bottom: 0;
+  width: 42%;
+  mix-blend-mode: multiply;
+  -webkit-mask-image: radial-gradient(ellipse 62% 70% at 50% 46%, #000 52%, transparent 78%);
+  mask-image: radial-gradient(ellipse 62% 70% at 50% 46%, #000 52%, transparent 78%);
+}
+.asc-ink-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; border: 0; filter: saturate(1.15) contrast(1.05); }
+
+/* vertical brush name */
+.asc-ink-name { position: absolute; left: 41%; top: 5%; bottom: 5%; z-index: 3; display: flex; align-items: flex-start; }
+.asc-ink-name h2 {
+  margin: 0;
+  writing-mode: vertical-rl;
+  font-family: var(--ink-brush) !important;
+  font-size: clamp(84px, 9vw, 150px);
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: 0.04em;
+  color: var(--ink-black);
+  border: 0;
+  text-shadow: 2px 2px 0 rgba(26, 31, 44, 0.15);
+}
+.asc-ink-kanji {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  writing-mode: vertical-rl;
+  font-family: var(--ink-brush);
+  font-size: clamp(90px, 10vw, 170px);
+  line-height: 1;
+  color: rgba(195, 50, 29, 0.18);
+  transform: translateX(-20%);
+  pointer-events: none;
+}
+
+/* reading side */
+.asc-ink-info {
+  position: absolute;
+  right: 3%;
+  top: 5%;
+  bottom: 4%;
+  width: 44%;
+  z-index: 3;
+  overflow-y: auto;
+  padding: 4px 6px 8px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 31, 44, 0.3) transparent;
+}
+.asc-ink-info header { display: flex; gap: 18px; font-size: 14px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); }
+.asc-ink-info header span:first-child { color: var(--ink-red); }
+.asc-ink-role { margin: 10px 0 0; font-size: 22px; font-weight: 600; color: var(--ink-indigo); }
+.asc-ink-blurb { margin: 8px 0 0; font-size: 19px; line-height: 1.55; color: var(--ink-black); }
+
+.asc-ink-seals { display: flex; gap: 16px; margin-top: 18px; }
+#asc-select .asc-ink-seals button {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: auto;
+  height: auto;
+  padding: 0;
+  font-family: var(--ink-text) !important;
+  font-size: 15px;
+  color: var(--ink-black);
+  background: none;
+  border: 0;
+}
+#asc-select .asc-ink-seals button i {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  font-size: 24px;
+  color: #fbeee6;
+  background: var(--ink-red);
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 3px rgba(251, 238, 230, 0.5), inset 0 0 12px rgba(80, 10, 0, 0.35);
+  transform: rotate(-4deg);
+  opacity: 0.55;
+  transition: opacity 0.15s, transform 0.15s;
+}
+#asc-select .asc-ink-seals button:nth-child(2) i { transform: rotate(3deg); }
+#asc-select .asc-ink-seals button:nth-child(3) i { transform: rotate(-2deg); }
+#asc-select .asc-ink-seals button:hover i { opacity: 0.8; }
+#asc-select .asc-ink-seals button.is-on i { opacity: 1; transform: rotate(0) scale(1.08); }
+#asc-select .asc-ink-seals button.is-on span { font-weight: 700; color: var(--ink-red); }
+.asc-ink-desc { margin: 12px 0 0; padding: 10px 14px; font-size: 18px; line-height: 1.5; border-left: 4px solid var(--ink-red); background: rgba(255, 255, 255, 0.35); }
+
+.asc-ink-cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 22px; margin-top: 16px; }
+.asc-ink-strokes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.asc-ink-strokes li { display: grid; grid-template-columns: 40px 1fr 30px; align-items: center; gap: 10px; }
+.asc-ink-strokes span { font-size: 15px; letter-spacing: 0.08em; color: var(--ink-soft); }
+.asc-ink-strokes i {
+  display: block;
+  width: var(--w);
+  height: 11px;
+  background: linear-gradient(90deg, var(--ink-black), var(--ink-indigo) 85%, rgba(38, 54, 94, 0.5));
+  clip-path: polygon(0 30%, 4% 0, 92% 10%, 100% 45%, 96% 90%, 6% 100%, 0 70%);
+}
+.asc-ink-strokes b { font-size: 22px; font-weight: 600; text-align: right; }
+
+.asc-ink-skills { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 18px; }
+.asc-ink-skills li { display: flex; align-items: center; gap: 10px; }
+.asc-ink-skills li i { width: 10px; height: 10px; border-radius: 50%; background: var(--ink-black); box-shadow: 2px 1px 0 rgba(26, 31, 44, 0.3); }
+.asc-ink-skills em { margin-left: auto; font-style: normal; color: var(--ink-red); }
+.asc-ink-vitals { display: flex; flex-wrap: wrap; gap: 14px; margin: 14px 0 0; font-size: 16px; color: var(--ink-soft); }
+.asc-ink-vitals b { font-size: 22px; color: var(--ink-black); }
+.asc-ink-note { margin: 12px 0 0; font-size: 17px; color: var(--ink-red); }
+
+#asc-select[data-stage="aiden"] .asc-v-gm { border-top-color: rgba(26, 31, 44, 0.2); }
+#asc-select[data-stage="aiden"] .asc-v-gm button,
+#asc-select[data-stage="aiden"] .asc-v-gm label { font-family: var(--ink-text); font-size: 14px; color: var(--ink-black); background: rgba(255, 255, 255, 0.4); border-color: rgba(26, 31, 44, 0.3); border-radius: 0; }
+#asc-select[data-stage="aiden"] .asc-v-gm input { color: var(--ink-black); background: #fff; border-color: rgba(26, 31, 44, 0.3); }
+
+/* shared roster as paper cards */
+#asc-select[data-stage="aiden"] .asc-v-hit { background: var(--ink-paper) !important; border: 2px solid rgba(26, 31, 44, 0.5) !important; border-radius: 0 !important; }
+#asc-select[data-stage="aiden"] .asc-v-card-art img { mix-blend-mode: multiply; }
+#asc-select[data-stage="aiden"] .asc-v-card.is-active .asc-v-hit { border-color: var(--ink-red) !important; }
+#asc-select[data-stage="aiden"] .asc-v-card-name b { font-family: var(--ink-brush) !important; font-weight: 400; font-size: 22px; text-transform: none; }
+#asc-select[data-stage="aiden"] .asc-v-lock {
+  font-family: var(--ink-brush) !important;
+  font-weight: 400;
+  font-size: 20px !important;
+  letter-spacing: 0.1em;
+  color: #fbeee6 !important;
+  background: var(--ink-red) !important;
+  border-color: var(--ink-red) !important;
+  border-radius: 0 !important;
+}
+#asc-select[data-stage="aiden"] .asc-v-lock:hover { filter: brightness(1.1); }
+#asc-select[data-stage="aiden"] .asc-v-close { color: var(--ink-black) !important; background: var(--ink-paper) !important; border-color: rgba(26, 31, 44, 0.4) !important; }
+#asc-select[data-stage="aiden"] .asc-sel-flash { background: rgba(241, 233, 216, 0.8); }
+#asc-select[data-stage="aiden"] .asc-sel-flash span {
+  display: grid;
+  place-items: center;
+  width: 220px;
+  height: 220px;
+  font-family: var(--ink-brush);
+  font-size: 150px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #fbeee6;
+  background: var(--ink-red);
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 8px rgba(251, 238, 230, 0.5), inset 0 0 30px rgba(80, 10, 0, 0.4);
+  animation: asc-ink-stamp 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes asc-ink-stamp { from { transform: scale(1.8) rotate(-12deg); opacity: 0; } to { transform: scale(1) rotate(-6deg); opacity: 1; } }
+
+@media (max-width: 1000px) {
+  .asc-ink-portrait { width: 100%; height: 42%; bottom: auto; }
+  .asc-ink-name { left: auto; right: 4%; top: 4%; bottom: auto; height: 38%; }
+  .asc-ink-info { left: 4%; right: 4%; top: 44%; width: auto; }
+  .asc-ink-cols { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asc-ink-splat, .asc-ink-splat * { animation: none; opacity: 0; }
+  #asc-select[data-stage="aiden"] .asc-sel-flash span { animation: none; }
 }

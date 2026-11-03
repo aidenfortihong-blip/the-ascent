@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.12.6";
+  const VERSION = "0.13.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1234,10 +1234,64 @@
     if (!select.evanShown) setTimeout(() => { select.evanShown = true; },800);
   }
 
+  // AIDEN: ink and brush on rice paper. His watercolor portrait soaks into the
+  // paper, his name runs vertically in a brush stroke, Talents are red seals,
+  // stats are brush strokes, and ink splatters once when he is picked.
+  function aidenStage({p,actor}) {
+    const talents = C.TALENTS.filter(t => t.owner === p.key);
+    const pick = Math.min(select.talent,talents.length - 1);
+    const t = talents[pick];
+    const lock = lockState(actor);
+    const sys = actor.system.attributes;
+    const skills = skillsOf(actor);
+    const strokes = STAT_KEYS.map(k => {
+      const v = p.abilities[k];
+      return '<li><span>' + k.toUpperCase() + '</span><i style="--w:' + Math.round(v / 20 * 100) + '%"></i><b>' + v + '</b></li>';
+    }).join("");
+    const seals = talents.map((x,i) =>
+      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '" aria-label="' + esc(x.name) + '">' +
+        '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '" aria-hidden="true"></i><span>' + esc(x.name) + '</span></button>').join("");
+    const known = [...(p.free ?? []),...p.skills].map(k =>
+      '<li><i aria-hidden="true"></i>' + esc(C.SKILL[k].name) + ' <em>' + ROMAN[skills[k]?.rank ?? 1] + '</em></li>').join("");
+    const splat = select.aidenInked ? "" :
+      '<svg class="asc-ink-splat" viewBox="0 0 400 300" aria-hidden="true">' +
+        '<path class="s1" d="M120 140c30-40 90-50 120-20s20 70-20 90-80 30-110 0-20-40 10-70z"/>' +
+        '<circle class="s2" cx="260" cy="90" r="14"/><circle class="s3" cx="300" cy="200" r="9"/><circle class="s4" cx="80" cy="230" r="11"/>' +
+        '<circle class="s5" cx="330" cy="130" r="5"/><circle class="s6" cx="60" cy="110" r="6"/>' +
+        '<path class="s7" d="M240 210c20 10 40 30 70 34" /></svg>';
+    return '<div class="asc-ink">' +
+      '<div class="asc-ink-paper" aria-hidden="true"></div>' +
+      '<div class="asc-ink-wash w1" aria-hidden="true"></div><div class="asc-ink-wash w2" aria-hidden="true"></div><div class="asc-ink-wash w3" aria-hidden="true"></div>' +
+      splat +
+      '<div class="asc-ink-portrait" aria-hidden="true">' + artOf(actor,p.name[0]) + '</div>' +
+      '<div class="asc-ink-name"><span class="asc-ink-kanji" aria-hidden="true">疾風</span><h2>' + esc(p.name) + '</h2></div>' +
+      '<section class="asc-ink-info">' +
+        '<header><span>The Ascent</span><span>Floor ' + floor() + '</span><span>Squad ' + squadCount() + ' / ' + SQUAD_SIZE + '</span></header>' +
+        '<p class="asc-ink-role">' + esc(p.role ?? "Player") + (p.handle ? ' &middot; ' + esc(p.handle) : '') + '</p>' +
+        '<p class="asc-ink-blurb">' + esc(p.blurb ?? "") + '</p>' +
+        '<div class="asc-ink-seals" role="tablist" aria-label="Talents">' + seals + '</div>' +
+        (t ? '<p class="asc-ink-desc" role="tabpanel">' + esc(t.text) + '</p>' : '') +
+        '<div class="asc-ink-cols">' +
+          '<ul class="asc-ink-strokes">' + strokes + '</ul>' +
+          '<div><ul class="asc-ink-skills">' + known + '</ul>' +
+            '<p class="asc-ink-vitals"><span>HP <b>' + sys.hp.max + '</b></span><span>AC <b>' + sys.ac.value + '</b></span><span>Speed <b>' + sys.movement.walk + '</b> ft</span></p></div>' +
+        '</div>' +
+        (lock.note ? '<p class="asc-ink-note">' + esc(lock.note) + '</p>' : '') +
+        gmTools(actor) +
+      '</section>' +
+    '</div>';
+  }
+
+  // The splatter plays once per pick, not on every seal click.
+  function aidenAfter() {
+    if (!select.aidenInked) setTimeout(() => { select.aidenInked = true; },1200);
+  }
+
   const STAGES = {
     andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"},
     cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."},
-    evan:{render:evanStage,after:evanAfter,lock:"DEPLOY",flash:() => "EVAN JOINED THE ARMY"}
+    evan:{render:evanStage,after:evanAfter,lock:"DEPLOY",flash:() => "EVAN JOINED THE ARMY"},
+    aiden:{render:aidenStage,after:aidenAfter,lock:"SEAL",flash:() => "決"}
   };
 
   function infoPanel({p,actor}) {
@@ -1325,6 +1379,7 @@
     select.talent = 0;
     // Cara's sprite resolves once per pick, not on every Talent click.
     select.caraResolved = false;
+    select.aidenInked = false;
     select.evanShown = false;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
@@ -1417,6 +1472,7 @@
     const mine = list.findIndex(x => x.actor.id === game.user.character?.id);
     select.index = mine >= 0 ? mine : 0;
     select.caraResolved = false;
+    select.aidenInked = false;
     select.evanShown = false;
     renderSelect();
     select.el.querySelector(".asc-v-card.is-active .asc-v-hit")?.focus();
