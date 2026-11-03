@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.11.0";
+  const VERSION = "0.12.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1148,9 +1148,9 @@
     },34);
   }
 
-  // EVAN: a handheld-era tactical RPG screen. A tilted battlefield with his
-  // move (blue) and attack (red) range, his animated sprite on his tile, his
-  // bust sliding in on the left, glossy windows sliding in on the right.
+  // EVAN: his unit standing on a pixel tactics map (Kenney's CC0 sample map,
+  // 16px tiles drawn at 3x), with move and attack range on the tile grid and a
+  // cursor on him; a parchment status window opens over the right side.
   const RANK_LETTER = ["","E","D","C","B","A"];
   const EVAN_ART = "https://assets.forge-vtt.com/600d963af3cd821ef5bfb19a/Ascent/evan/";
 
@@ -1161,50 +1161,70 @@
     const lock = lockState(actor);
     const sys = actor.system.attributes;
     const skills = skillsOf(actor);
-    const hpPct = Math.round(100 * sys.hp.value / Math.max(1,sys.hp.max));
+    const lv = levelOf(actor);
+    const tiles = [];
+    for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) {
+      const d = Math.abs(x) + Math.abs(y);
+      if (d > 4 || d === 0) continue;
+      tiles.push('<i class="' + (d === 4 ? "is-atk" : "is-move") + '" style="--x:' + x + ';--y:' + y + '"></i>');
+    }
     const stats = STAT_KEYS.map(k => {
       const v = p.abilities[k];
-      return '<li><span>' + k.charAt(0).toUpperCase() + k.slice(1) + '</span><b>' + v + '</b><i><em style="width:' + Math.round(v / 20 * 100) + '%"></em></i></li>';
+      return '<li><span>' + k.charAt(0).toUpperCase() + k.slice(1) + '</span><i><em style="width:' + Math.round(v / 20 * 100) + '%"></em></i><b>' + v + '</b></li>';
     }).join("");
-    const ranks = [...(p.free ?? []),...p.skills].map(k =>
-      '<li><i class="' + esc(C.SKILL[k].icon) + '"></i><span>' + esc(C.SKILL[k].name) + '</span><b>' + RANK_LETTER[skills[k]?.rank ?? 1] + '</b></li>').join("");
-    const icons = talents.map((x,i) =>
-      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '" aria-label="' + esc(x.name) + '" data-tooltip="' + esc(x.name) + '">' +
-        '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '"></i></button>').join("");
-    // Move 4 tiles (blue), attack 1 more (red), around his tile.
-    const tiles = [];
-    for (let y = -5; y <= 5; y++) for (let x = -5; x <= 5; x++) {
-      const d = Math.abs(x) + Math.abs(y);
-      if (d > 5) continue;
-      tiles.push('<i class="' + (d === 0 ? "is-unit" : d === 5 ? "is-atk" : "is-move") + '" style="--x:' + x + ';--y:' + y + ';--d:' + d + '"></i>');
-    }
-    return '<div class="asc-f3' + (select.evanShown ? " is-shown" : "") + '">' +
-      '<div class="asc-f3-sky" aria-hidden="true"></div>' +
-      '<div class="asc-f3-world" aria-hidden="true"><div class="asc-f3-field">' + tiles.join("") +
-        '<span class="asc-f3-sprite" style="background-image:url(' + EVAN_ART + 'evan-sprite.png)"></span>' +
-      '</div></div>' +
-      '<div class="asc-f3-band" aria-hidden="true"></div>' +
-      '<img class="asc-f3-bust" src="' + EVAN_ART + 'evan-bust.webp" alt="">' +
-      '<section class="asc-f3-ui">' +
-        '<div class="asc-f3-win asc-f3-name" style="--n:0">' +
-          '<h2>' + esc(p.name) + '</h2>' +
-          '<p>' + esc(p.role ?? "Player") + (p.handle ? ' <span>' + esc(p.handle) + '</span>' : '') + '</p>' +
-          '<div class="asc-f3-hp"><span>Lv</span><b>' + levelOf(actor) + '</b><span>HP</span><b>' + sys.hp.value + '</b><small>/' + sys.hp.max + '</small><i><em style="width:' + hpPct + '%"></em></i></div>' +
+    const talentRows = talents.map((x,i) =>
+      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '">' +
+        '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '"></i><span>' + esc(x.name) + '</span></button>').join("");
+    const levels = [...(p.free ?? []),...p.skills].map(k => {
+      const r = skills[k]?.rank ?? 1;
+      return '<li><i class="' + esc(C.SKILL[k].icon) + '"></i><span>' + esc(C.SKILL[k].name) + '</span><em><b style="width:' + (r * 20) + '%"></b></em><strong>' + RANK_LETTER[r] + '</strong></li>';
+    }).join("");
+    return '<div class="asc-th' + (select.evanShown ? " is-shown" : "") + '" style="--map:url(' + EVAN_ART + 'evan-map.png)">' +
+      '<div class="asc-th-map" aria-hidden="true">' +
+        '<div class="asc-th-range">' + tiles.join("") + '</div>' +
+        '<span class="asc-th-cursor"><i></i><i></i><i></i><i></i></span>' +
+        '<span class="asc-th-sprite" style="background-image:url(' + EVAN_ART + 'evan-sprite.png)"></span>' +
+      '</div>' +
+      '<section class="asc-th-win">' +
+        '<header class="asc-th-bar"><span class="asc-th-crest" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span><b>' + esc(p.name) + '</b>' +
+          '<nav aria-hidden="true"><span>Status</span><span class="is-on">Skills</span><span>Notes</span></nav></header>' +
+        '<div class="asc-th-body">' +
+          '<div class="asc-th-col">' +
+            '<h3>Personal Information</h3>' +
+            '<p class="asc-th-name">' + esc(p.name) + '</p>' +
+            '<div class="asc-th-who">' +
+              '<span class="asc-th-medal">' + artOf(actor,p.name[0]) + '</span>' +
+              '<dl><div><dt>Alias</dt><dd>' + esc(p.handle || "-") + '</dd></div><div><dt>Floor</dt><dd>' + floor() + '</dd></div><div><dt>Squad</dt><dd>' + squadCount() + '/' + SQUAD_SIZE + '</dd></div></dl>' +
+            '</div>' +
+            '<dl class="asc-th-rows">' +
+              '<div><dt>Class</dt><dd>' + esc(p.role ?? "Player") + ' <span class="asc-th-mini" style="background-image:url(' + EVAN_ART + 'evan-sprite.png)"></span></dd></div>' +
+              '<div><dt>Affiliation</dt><dd>Upper Bracket</dd></div>' +
+            '</dl>' +
+            '<div class="asc-th-lv"><span>Lv</span><b>' + lv + '</b><span>Exp</span><i><em style="width:0%"></em></i></div>' +
+            '<div class="asc-th-hp"><span class="asc-th-hpbox">HP <b>' + sys.hp.max + '</b></span><span>Mv <b>' + Math.round(sys.movement.walk / 5) + '</b></span><span>Def <b>' + sys.ac.value + '</b></span></div>' +
+            '<h3>Stats</h3>' +
+            '<ul class="asc-th-stats">' + stats + '</ul>' +
+          '</div>' +
+          '<div class="asc-th-col">' +
+            '<h3>Talents</h3>' +
+            '<div class="asc-th-list" role="tablist" aria-label="Talents">' + talentRows + '</div>' +
+            '<h3>Details</h3>' +
+            (t ? '<p class="asc-th-desc" role="tabpanel"><b>' + esc(t.name) + '</b>' + esc(t.text) + '</p>' : '') +
+            (lock.note ? '<p class="asc-th-note">' + esc(lock.note) + '</p>' : '') +
+            gmTools(actor) +
+          '</div>' +
+          '<div class="asc-th-col">' +
+            '<h3>Skill Level</h3>' +
+            '<ul class="asc-th-levels">' + levels + '</ul>' +
+          '</div>' +
         '</div>' +
-        '<div class="asc-f3-win asc-f3-stats" style="--n:1"><ul>' + stats + '</ul>' +
-          '<p class="asc-f3-sub"><span>Def <b>' + sys.ac.value + '</b></span><span>Mov <b>' + Math.round(sys.movement.walk / 5) + '</b></span><span>Floor <b>' + floor() + '</b></span></p></div>' +
-        '<div class="asc-f3-win asc-f3-ranks" style="--n:2"><ul>' + ranks + '</ul></div>' +
-        '<div class="asc-f3-win asc-f3-skills" style="--n:3"><div class="asc-f3-icons" role="tablist" aria-label="Talents">' + icons + '</div>' +
-          (t ? '<p role="tabpanel"><b>' + esc(t.name) + '</b> ' + esc(t.text) + '</p>' : '') + '</div>' +
-        (lock.note ? '<p class="asc-f3-note">' + esc(lock.note) + '</p>' : '') +
-        gmTools(actor) +
       '</section>' +
     '</div>';
   }
 
-  // Slide-ins play once per pick, not on every skill click.
+  // The window slides in once per pick, not on every Talent click.
   function evanAfter() {
-    if (!select.evanShown) setTimeout(() => { select.evanShown = true; },1200);
+    if (!select.evanShown) setTimeout(() => { select.evanShown = true; },800);
   }
 
   const STAGES = {
