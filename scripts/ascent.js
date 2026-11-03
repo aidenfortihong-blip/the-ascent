@@ -6,7 +6,7 @@
 // the Skills tab.
 
 (() => {
-  const VERSION = "0.10.1";
+  const VERSION = "0.11.0";
   const MODULE = "the-ascent";
   const C = globalThis.ASCENT_CATALOG;
   if (!C) throw new Error("THE ASCENT // catalog missing");
@@ -1148,43 +1148,11 @@
     },34);
   }
 
-  // EVAN: a tactical RPG unit status screen over a battle map with his
-  // movement range lit up. Stats with bars, skills as weapon ranks, Talents
-  // as personal skills.
+  // EVAN: a handheld-era tactical RPG screen. A tilted battlefield with his
+  // move (blue) and attack (red) range, his animated sprite on his tile, his
+  // bust sliding in on the left, glossy windows sliding in on the right.
   const RANK_LETTER = ["","E","D","C","B","A"];
-
-  // Evan's map sprite: original 16x16 pixel art, two idle frames (cape flutter).
-  const EVAN_SPRITE = [
-    "......KKKK......",
-    ".....KHHHHK.....",
-    "....KHHHHHHK....",
-    "....KGGGGGGK....",
-    "....KHSSSSHK....",
-    "....KSKSSKSK....",
-    ".....KSSSSK.....",
-    "....KCBBBBCK....",
-    "...KCBBWWBBCK...",
-    "...KCBBBBBBCKs..",
-    "..KCCBGGGGBCCKs.",
-    "..KCCBBBBBBCCKs.",
-    "..KCCKBBBBKCCKG.",
-    "...KCKbbbbKCK...",
-    "....KRRKKRRK....",
-    "....KKK..KKK...."
-  ];
-  const EVAN_FLUTTER = {13:"..KCCKbbbbKCCK.."};
-  const SPRITE_COLORS = {K:"#141a2e",H:"#3266e0",G:"#f2c94c",S:"#f7cfa6",C:"#1f3f9a",B:"#3a78e0",W:"#eef3fb",b:"#22408f",R:"#6a4423",s:"#d8e0ee"};
-
-  function spriteFrame(rows,cls) {
-    const rects = rows.flatMap((row,y) => [...row].map((ch,x) =>
-      SPRITE_COLORS[ch] ? '<rect x="' + x + '" y="' + y + '" width="1" height="1" fill="' + SPRITE_COLORS[ch] + '"/>' : "")).join("");
-    return '<svg class="' + cls + '" viewBox="0 0 16 16" shape-rendering="crispEdges">' + rects + '</svg>';
-  }
-
-  function evanSprite() {
-    const flutter = EVAN_SPRITE.map((row,y) => EVAN_FLUTTER[y] ?? row);
-    return '<span class="asc-fe-unit">' + spriteFrame(EVAN_SPRITE,"f1") + spriteFrame(flutter,"f2") + '</span>';
-  }
+  const EVAN_ART = "https://assets.forge-vtt.com/600d963af3cd821ef5bfb19a/Ascent/evan/";
 
   function evanStage({p,actor}) {
     const talents = C.TALENTS.filter(t => t.owner === p.key);
@@ -1196,53 +1164,53 @@
     const hpPct = Math.round(100 * sys.hp.value / Math.max(1,sys.hp.max));
     const stats = STAT_KEYS.map(k => {
       const v = p.abilities[k];
-      return '<li><span>' + k.toUpperCase() + '</span><b>' + v + '</b><i><em style="width:' + Math.round(v / 20 * 100) + '%"></em></i></li>';
+      return '<li><span>' + k.charAt(0).toUpperCase() + k.slice(1) + '</span><b>' + v + '</b><i><em style="width:' + Math.round(v / 20 * 100) + '%"></em></i></li>';
     }).join("");
     const ranks = [...(p.free ?? []),...p.skills].map(k =>
       '<li><i class="' + esc(C.SKILL[k].icon) + '"></i><span>' + esc(C.SKILL[k].name) + '</span><b>' + RANK_LETTER[skills[k]?.rank ?? 1] + '</b></li>').join("");
-    const personal = talents.map((x,i) =>
-      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '" aria-label="' + esc(x.name) + '">' +
-        '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '"></i><span>' + esc(x.name) + '</span></button>').join("");
-    // A diamond of movement tiles, radius 4, around the unit.
+    const icons = talents.map((x,i) =>
+      '<button type="button" role="tab" aria-selected="' + (i === pick) + '" class="' + (i === pick ? "is-on" : "") + '" data-talent="' + i + '" aria-label="' + esc(x.name) + '" data-tooltip="' + esc(x.name) + '">' +
+        '<i class="' + esc(x.icon ?? "fa-solid fa-star") + '"></i></button>').join("");
+    // Move 4 tiles (blue), attack 1 more (red), around his tile.
     const tiles = [];
-    for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) {
+    for (let y = -5; y <= 5; y++) for (let x = -5; x <= 5; x++) {
       const d = Math.abs(x) + Math.abs(y);
-      if (d > 4 || d === 0) continue;
-      tiles.push('<i style="--x:' + x + ';--y:' + y + ';--d:' + d + '"></i>');
+      if (d > 5) continue;
+      tiles.push('<i class="' + (d === 0 ? "is-unit" : d === 5 ? "is-atk" : "is-move") + '" style="--x:' + x + ';--y:' + y + ';--d:' + d + '"></i>');
     }
-    const embers = Array.from({length:9},(v,i) => '<i style="--e:' + i + '"></i>').join("");
-    return '<div class="asc-fe">' +
-      '<div class="asc-fe-map" aria-hidden="true"><div class="asc-fe-range">' + tiles.join("") + '<b></b></div></div>' +
-      '<div class="asc-fe-embers" aria-hidden="true">' + embers + '</div>' +
-      '<section class="asc-fe-left">' +
-        '<div class="asc-fe-portrait">' + artOf(actor,p.name[0]) + '</div>' +
-        '<div class="asc-fe-plate">' +
-          '<div class="asc-fe-namerow"><h2>' + esc(p.name) + '</h2>' + evanSprite() + '</div>' +
-          '<p class="asc-fe-class">' + esc(p.role ?? "Player") + (p.handle ? ' <span>&middot; ' + esc(p.handle) + '</span>' : '') + '</p>' +
-          '<div class="asc-fe-lv"><span>Lv</span><b>' + levelOf(actor) + '</b><span>HP</span><b>' + sys.hp.value + '</b><small>/ ' + sys.hp.max + '</small></div>' +
-          '<i class="asc-fe-hp"><em style="width:' + hpPct + '%"></em></i>' +
+    return '<div class="asc-f3' + (select.evanShown ? " is-shown" : "") + '">' +
+      '<div class="asc-f3-sky" aria-hidden="true"></div>' +
+      '<div class="asc-f3-world" aria-hidden="true"><div class="asc-f3-field">' + tiles.join("") +
+        '<span class="asc-f3-sprite" style="background-image:url(' + EVAN_ART + 'evan-sprite.png)"></span>' +
+      '</div></div>' +
+      '<div class="asc-f3-band" aria-hidden="true"></div>' +
+      '<img class="asc-f3-bust" src="' + EVAN_ART + 'evan-bust.webp" alt="">' +
+      '<section class="asc-f3-ui">' +
+        '<div class="asc-f3-win asc-f3-name" style="--n:0">' +
+          '<h2>' + esc(p.name) + '</h2>' +
+          '<p>' + esc(p.role ?? "Player") + (p.handle ? ' <span>' + esc(p.handle) + '</span>' : '') + '</p>' +
+          '<div class="asc-f3-hp"><span>Lv</span><b>' + levelOf(actor) + '</b><span>HP</span><b>' + sys.hp.value + '</b><small>/' + sys.hp.max + '</small><i><em style="width:' + hpPct + '%"></em></i></div>' +
         '</div>' +
-      '</section>' +
-      '<section class="asc-fe-panel">' +
-        '<header class="asc-fe-top"><span>UNIT STATUS</span><span>FLOOR ' + floor() + ' &middot; SQUAD ' + squadCount() + '/' + SQUAD_SIZE + '</span></header>' +
-        '<div class="asc-fe-cols">' +
-          '<div><small class="asc-fe-label">Stats</small><ul class="asc-fe-stats">' + stats + '</ul>' +
-            '<p class="asc-fe-sub"><span>AC <b>' + sys.ac.value + '</b></span><span>Move <b>' + Math.round(sys.movement.walk / 5) + '</b></span></p></div>' +
-          '<div><small class="asc-fe-label">Weapon ranks</small><ul class="asc-fe-ranks">' + ranks + '</ul></div>' +
-        '</div>' +
-        '<small class="asc-fe-label">Personal skills</small>' +
-        '<div class="asc-fe-skills" role="tablist" aria-label="Talents">' + personal + '</div>' +
-        (t ? '<p class="asc-fe-desc" role="tabpanel">' + esc(t.text) + '</p>' : '') +
-        (lock.note ? '<p class="asc-fe-note">' + esc(lock.note) + '</p>' : '') +
+        '<div class="asc-f3-win asc-f3-stats" style="--n:1"><ul>' + stats + '</ul>' +
+          '<p class="asc-f3-sub"><span>Def <b>' + sys.ac.value + '</b></span><span>Mov <b>' + Math.round(sys.movement.walk / 5) + '</b></span><span>Floor <b>' + floor() + '</b></span></p></div>' +
+        '<div class="asc-f3-win asc-f3-ranks" style="--n:2"><ul>' + ranks + '</ul></div>' +
+        '<div class="asc-f3-win asc-f3-skills" style="--n:3"><div class="asc-f3-icons" role="tablist" aria-label="Talents">' + icons + '</div>' +
+          (t ? '<p role="tabpanel"><b>' + esc(t.name) + '</b> ' + esc(t.text) + '</p>' : '') + '</div>' +
+        (lock.note ? '<p class="asc-f3-note">' + esc(lock.note) + '</p>' : '') +
         gmTools(actor) +
       '</section>' +
     '</div>';
   }
 
+  // Slide-ins play once per pick, not on every skill click.
+  function evanAfter() {
+    if (!select.evanShown) setTimeout(() => { select.evanShown = true; },1200);
+  }
+
   const STAGES = {
     andrei:{render:andreiStage,lock:"ACTIVATE UNIT",flash:() => "UNIT ACTIVATED"},
     cara:{render:caraStage,after:caraAfter,lock:"JOIN PARTY",flash:() => "* CARA JOINED THE PARTY."},
-    evan:{render:evanStage,lock:"DEPLOY",flash:() => "EVAN JOINED THE ARMY"}
+    evan:{render:evanStage,after:evanAfter,lock:"DEPLOY",flash:() => "EVAN JOINED THE ARMY"}
   };
 
   function infoPanel({p,actor}) {
@@ -1330,6 +1298,7 @@
     select.talent = 0;
     // Cara's sprite resolves once per pick, not on every Talent click.
     select.caraResolved = false;
+    select.evanShown = false;
     renderSelect();
     select.el?.querySelector('[data-sel-index="' + index + '"]')?.focus();
     await playTheme(list[index].actor);
@@ -1416,6 +1385,7 @@
     const mine = list.findIndex(x => x.actor.id === game.user.character?.id);
     select.index = mine >= 0 ? mine : 0;
     select.caraResolved = false;
+    select.evanShown = false;
     renderSelect();
     select.el.querySelector(".asc-v-card.is-active .asc-v-hit")?.focus();
     preloadThemes();
